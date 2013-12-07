@@ -1,23 +1,18 @@
-interface IsbConfig {
-    listClass: string;
-    listItemClass: string;
-    divName: string;
-}
 
-interface IsbFiterProperty {
-    display: string;
-    value: string;
-    dataType: string;
-}
 
-interface IsbLine {
-    prop: string;
-    oper: string;
-    cnst: string;
-    dataType: string;
-}
+module com.contrivedexample.isbjs {
 
-module com.contrivedexample.isb {
+    export interface IsbConfig {
+        listClass: string;
+        listItemClass: string;
+        divName: string;
+    }
+
+    export interface IsbFiterProperty {
+        display: string;
+        value: string;
+        dataType: string;
+    }
 
     export class Isb {
         constructor(fltrConfig: IsbConfig) {
@@ -39,15 +34,22 @@ module com.contrivedexample.isb {
         private _nbrConditions = ["Is equal to", "Is greater than", "Is less than", "Is Null"];
         private _boolConditions = ["True", "False"];
 
-        private EQUALS: string = "=";
-        private STARTS_WITH: string = "sw";
-        private TRUE: string = "t";
-        private FALSE: string = "f";
-        private CONTAINS: string = "c";
-        private GREATER: string = ">";
-        private GREATER_EQ: string = ">=";
-        private LESS: string = "<";
-        private LESS_EQ: string = "<=";
+        private _TEXT: string = "text";
+        private _NUMBER: string = "number";
+        private _BOOL: string = "bool";
+        private _DATE: string = "date";
+
+        private _EQUALS: string = "=";
+        private _STARTS_WITH: string = "sw";
+        private _TRUE: string = "t";
+        private _FALSE: string = "f";
+        private _CONTAINS: string = "c";
+        private _GREATER: string = ">";
+        private _GREATER_EQ: string = ">=";
+        private _LESS: string = "<";
+        private _LESS_EQ: string = "<=";
+        private _IN: string = "in";
+        private _NOTIN: string = "!in";
 
         private _props: Array<IsbFiterProperty>;
         private _fltrConfig: IsbConfig;
@@ -56,7 +58,7 @@ module com.contrivedexample.isb {
             this._props.push(prop);
         }
 
-        render() {
+        render() {           
             var theUl: HTMLUListElement =
                 <HTMLUListElement>document.querySelector("#" + this._fltrConfig.divName);
             theUl.innerHTML = "";
@@ -78,7 +80,7 @@ module com.contrivedexample.isb {
                     orOpt.setAttribute("value", "OR");
                     orOpt.appendChild(document.createTextNode("OR"));
 
-                    andOrSelect.onchange = (function (idx:number) {
+                    andOrSelect.onchange = (function (idx: number) {
                         return function () { arr[idx] = this.value; };
                     })(i);
 
@@ -108,54 +110,50 @@ module com.contrivedexample.isb {
                         var opersel = this.buildOperatorSelect("text")
                         var propsel = this.buildPropSelect(i, arr);
                         propsel["operator"] = opersel; //assign it an operator select so we can change the datatype of items
-
-                        propsel.onchange = (function (idx:number, that) {
-                            return function () {
-                                arr[idx].prop = this.value;
-                                var datatype;
-                                for (var j = 0; j < that._props.length; j++) {
-                                    if (that._props[j].value === this.value) {
-                                        datatype = that._props[j].dataType;
-                                    }
-                                }
-
-                                propsel["operator"].innerHTML = "";
-                                var whichlist;
-                                switch (datatype) {
-                                    case "text":
-                                        whichlist = that._textConditions;
-                                        break;
-                                    case "number":
-                                        whichlist = that._nbrConditions;
-                                        break;
-                                    case "bool":
-                                        whichlist = that._boolConditions;
-                                        break;
-                                    case "date":
-                                        whichlist = that._dateConditions;
-                                        break;
-                                }
-
-                                for (var i = 0; i < whichlist.length; i++) {
-                                    var optn = document.createElement("option");
-                                    optn.setAttribute("value", whichlist[i]);
-                                    optn.appendChild(document.createTextNode(whichlist[i]));
-                                    propsel["operator"].appendChild(optn);
-                                }
-                            }
-                        })(i, this);
-
+                        
                         fltrRow.appendChild(propsel);
                         fltrRow.appendChild(opersel);
-                        var inp = document.createElement("input");
-                        inp.setAttribute("type", "text");
-                        inp.setAttribute("size", "10");
-                        inp.setAttribute("value", arr[i].cnst);
-                        fltrRow.appendChild(inp);
+
+                        switch (arr[i].dataType) {
+                            case this._TEXT:
+                            case this._NUMBER:
+                            case this._DATE:
+                                var inp = document.createElement("input");
+                                inp.setAttribute("size", "10");
+                                inp.setAttribute("type", arr[i].dataType);
+                                inp.setAttribute("value", arr[i].cnst);
+                                propsel["inpt"] = inp;
+                                inp.onchange = (function (idx: number, that) {
+                                    return function () {
+                                        arr[idx].cnst = this.value;
+                                    }
+                                })(i, this);
+
+                                fltrRow.appendChild(inp);
+                                break;
+                            case this._BOOL:
+                                break;
+                        }
 
                         fltrRow.appendChild(this.buildPlusOrFork(i, arr, "p", 1, this));
                         fltrRow.appendChild(this.buildPlusOrFork(i, arr, "f", 1, this));
                         ul.appendChild(fltrRow);
+
+                        propsel.onchange = (function (idx: number, theArr: Array<any>, that) {
+                            return function () {
+                                theArr[idx].prop = this.value;
+                                
+                                //find the datatype of the item the user just selected
+                                for (var propIdx = 0; propIdx < that._props.length; propIdx++) {
+                                    if (that._props[propIdx].value === this.value) {
+                                        theArr[idx].dataType = that._props[propIdx].dataType;
+                                        break;
+                                    }
+                                }
+                                //render the widget to pick up the changes
+                                that.render();
+                            }
+                        })(i, arr,this);                        
                     }
                 }
             }
@@ -211,7 +209,7 @@ module com.contrivedexample.isb {
                 function (whicharray: Array<any>, idx: number, that: any) {
                     return function () {
                         whicharray.splice(idx + offset, 0, "AND", pushObj);
-                        that.render();                            
+                        that.render();
                     }
                 })(thearray, pos, that);
             return btn;
