@@ -1,5 +1,4 @@
 ﻿<!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -8,8 +7,25 @@
     <script src="app.js"></script>
 </head>
 <body>
-    <h1>TypeScript HTML App</h1>
+    <div id="content">
 
-    <div id="content"></div>
+    </div>
+    <script>
+
+        window.onload = function () {
+            var isb = new com.contrivedexample.isbjs.Isb({
+                "listClass": "none",
+                "listItemClass": "none",
+                "divName": "content"
+            });
+            isb.addFilterProperty({ "display": "Last Name", "value": "lastname", "dataType": "text" });
+            isb.addFilterProperty({ "display": "Age", "value": "age", "dataType": "number" });
+            isb.addFilterProperty({ "display": "Gender", "value": "gender", "dataType": "text" });
+            isb.addFilterProperty({ "display": "DOB", "value": "dob", "dataType": "date" })
+            isb.addFilterProperty({ "display": "Is Vested", "value": "vested", "dataType": "bool" })
+            isb.render();
+        };
+
+    </script>
 </body>
 </html>
