@@ -24,15 +24,15 @@ module com.contrivedexample.isbjs {
                     'oper': '=',
                     'cnst': 'Mitchell',
                     'dataType': 'text'
-                }];
+                }];            
         }
 
         private _theExpression: Array<any>;
-
         private _textConditions = ["Is equal to", "Contains", "Starts With", "Ends With", "Is Null"];
         private _dateConditions = ["Is equal to", "Is greater than", "Is less than", "Is Null"];
         private _nbrConditions = ["Is equal to", "Is greater than", "Is less than", "Is Null"];
         private _boolConditions = ["True", "False"];
+        private _propSelect: HTMLSelectElement;
 
         private _TEXT: string = "text";
         private _NUMBER: string = "number";
@@ -54,11 +54,14 @@ module com.contrivedexample.isbjs {
         private _props: Array<IsbFiterProperty>;
         private _fltrConfig: IsbConfig;
 
+        //Add a 'field name' to the list of choices.
         addFilterProperty(prop: IsbFiterProperty) {
             this._props.push(prop);
+            //recreate the prop select each time an item is added
+            this._propSelect = this.createPropSelect();
         }
 
-        render() {           
+        render() : void {           
             var theUl: HTMLUListElement =
                 <HTMLUListElement>document.querySelector("#" + this._fltrConfig.divName);
             theUl.innerHTML = "";
@@ -66,7 +69,21 @@ module com.contrivedexample.isbjs {
             console.log(JSON.stringify(this._theExpression));
         }
 
-        addCriteria(arr: Array<any>, ul: HTMLUListElement) {
+        //Internal helper to create a <select> of field names once and clone this
+        //one during render instead running this code over and over for each filter "row"
+        private createPropSelect(): HTMLSelectElement {
+            var propSelect = document.createElement("select");
+            for (var idx = 0; idx < this._props.length; idx++) {
+                var opt = document.createElement("option");
+                opt.setAttribute("value", this._props[idx].value);
+                opt.appendChild(document.createTextNode(this._props[idx].display));
+                propSelect.appendChild(opt);
+            }
+            return propSelect;
+        }
+        
+        //called recursively on the backing array, "expressions" to keep the data and UI in sync
+        addCriteria(arr: Array<any>, ul: HTMLUListElement):void {
             var newul: HTMLUListElement;
             for (var i = 0; i < arr.length; i++) {
                 if (typeof arr[i] == "string") {
@@ -107,9 +124,10 @@ module com.contrivedexample.isbjs {
                         //minusBtn.appendChild(document.createTextNode("-"));
                         //fltrRow.appendChild(minusBtn);
 
-                        var opersel = this.buildOperatorSelect("text")
+                        var opersel = this.buildOperatorSelect(arr[i].dataType);
+                        opersel.value = arr[i].oper;
                         var propsel = this.buildPropSelect(i, arr);
-                        propsel["operator"] = opersel; //assign it an operator select so we can change the datatype of items
+                       // propsel["operator"] = opersel; //assign it an operator select so we can change the datatype of items
                         
                         fltrRow.appendChild(propsel);
                         fltrRow.appendChild(opersel);
@@ -139,46 +157,61 @@ module com.contrivedexample.isbjs {
                         fltrRow.appendChild(this.buildPlusOrFork(i, arr, "f", 1, this));
                         ul.appendChild(fltrRow);
 
-                        propsel.onchange = (function (idx: number, theArr: Array<any>, that) {
+                        propsel.onchange = (function (idx: number, that) {
                             return function () {
-                                theArr[idx].prop = this.value;
+                                arr[idx].prop = this.value;
                                 
                                 //find the datatype of the item the user just selected
                                 for (var propIdx = 0; propIdx < that._props.length; propIdx++) {
                                     if (that._props[propIdx].value === this.value) {
-                                        theArr[idx].dataType = that._props[propIdx].dataType;
+                                        arr[idx].dataType = that._props[propIdx].dataType;
                                         break;
                                     }
                                 }
-                                //render the widget to pick up the changes
+                                //re-render the widget so that the appropriate operators are shown for this choice
                                 that.render();
                             }
-                        })(i, arr,this);                        
+                        })(i, this);                        
+
+                        //On change of operator, change backing data to match the choice
+                        opersel.onchange = (function (idx: number, that) {
+                            return function () {
+                                arr[idx].oper = this.value;
+                            };
+                        })(i, this);
                     }
                 }
             }
         }
 
         buildPropSelect(pos, thearray) {
-            var propSelect = document.createElement("select");
-
-            for (var i = 0; i < this._props.length; i++) {
-                var opt = document.createElement("option");
-                opt.setAttribute("value", this._props[i].value);
-                opt.appendChild(document.createTextNode(this._props[i].display));
-                propSelect.appendChild(opt);
-            }
+            var propSelect: HTMLSelectElement = <HTMLSelectElement>this._propSelect.cloneNode(true);
             propSelect.value = thearray[pos].prop;
-
             return propSelect;
         }
 
         buildOperatorSelect(whichoper) {
             var operSelect = document.createElement("select");
-            for (var i = 0; i < this._textConditions.length; i++) {
+            var whichlist;
+            switch (whichoper) {
+                case this._TEXT:
+                    whichlist = this._textConditions;
+                    break;
+                case this._NUMBER:
+                    whichlist = this._nbrConditions;
+                    break;
+                case this._BOOL:
+                    whichlist = this._boolConditions;
+                    break;
+                case this._DATE:
+                    whichlist = this._dateConditions;
+                    break;
+            }
+
+            for (var idx = 0; idx < whichlist.length; idx++) {
                 var opt = document.createElement("option");
-                opt.setAttribute("value", this._textConditions[i]);
-                opt.appendChild(document.createTextNode(this._textConditions[i]));
+                opt.setAttribute("value", whichlist[idx]);
+                opt.appendChild(document.createTextNode(whichlist[idx]));
                 operSelect.appendChild(opt);
             }
             return operSelect;
