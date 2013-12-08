@@ -1,4 +1,4 @@
-
+﻿
 
 module com.contrivedexample.isbjs {
 
@@ -14,6 +14,218 @@ module com.contrivedexample.isbjs {
         dataType: string;
     }
 
+    class Translations {
+        public _equals = {
+            "en": "Is equal to",
+            "zh": "等於",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "jaanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _notequals = {
+            "en": "Is not equal to",
+            "zh": "不等於",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _startswith = {
+            "en": "Starts with",
+            "zh": "開頭",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _endswith = {
+            "en": "Ends with",
+            "zh": "以結束",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _true = {
+            "en": "Is true",
+            "zh": "是真的",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _false = {
+            "en": "Is false",
+            "zh": "是錯誤的",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _null = {
+            "en": "Is null",
+            "zh": "為空",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _notnull = {
+            "en": "Is not null",
+            "zh": "不是 null",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _contains = {
+            "en": "Contains",
+            "zh": "包含",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _greater = {
+            "en": "Is greater than",
+            "zh": "大於",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _greatereq = {
+            "en": "Is greater than or equal to",
+            "zh": "大於或等於",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _less = {
+            "en": "Is less than",
+            "zh": "是少於",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _lesseq = {
+            "en": "Is less than or equal to",
+            "zh": "小於或等於",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _in = {
+            "en": "Is in",
+            "zh": "是在範圍內",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+
+        public _notin = {
+            "en": "Is not in",
+            "zh": "不在",
+            "fr": "french",
+            "de": "german",
+            "es": "Es igual a",
+            "ja": "japanese",
+            "it": "italian",
+            "he": "hebrew",
+            "hu": "hungarian",
+            "ms": "malay",
+            "ru": "russian"
+        };
+    }
+
     export class Isb {
         constructor(fltrConfig: IsbConfig) {
             this._fltrConfig = fltrConfig;
@@ -25,31 +237,45 @@ module com.contrivedexample.isbjs {
                     'cnst': 'Mitchell',
                     'dataType': 'text'
                 }];            
+
+            //var trans = new Translations();
+            
         }
 
-        private _theExpression: Array<any>;
-        private _textConditions = ["Is equal to", "Contains", "Starts With", "Ends With", "Is Null"];
-        private _dateConditions = ["Is equal to", "Is greater than", "Is less than", "Is Null"];
-        private _nbrConditions = ["Is equal to", "Is greater than", "Is less than", "Is Null"];
-        private _boolConditions = ["True", "False"];
-        private _propSelect: HTMLSelectElement;
-
+        
         private _TEXT: string = "text";
         private _NUMBER: string = "number";
         private _BOOL: string = "bool";
         private _DATE: string = "date";
+        
+        
+        
+        private _EQUALS: string = "等於";
+        private _NOTEQUALS: string = "Is not equal to";
+        private _STARTS_WITH: string = "Starts with";
+        private _ENDS_WITH: string = "Ends with";
+        private _TRUE: string = "True";
+        private _FALSE: string = "False";
+        private _NULL: string = "Null";
+        private _NOT_NULL: string = "Not null";
+        private _CONTAINS: string = "Contains";
+        private _GREATER: string = "Is greater than";
+        private _GREATER_EQ: string = "Is greater or =";
+        private _LESS: string = "Is less than";
+        private _LESS_EQ: string = "Is less or =";
+        private _IN: string = "In";
+        private _NOTIN: string = "Not In";
+        private _theExpression: Array<any>;
 
-        private _EQUALS: string = "=";
-        private _STARTS_WITH: string = "sw";
-        private _TRUE: string = "t";
-        private _FALSE: string = "f";
-        private _CONTAINS: string = "c";
-        private _GREATER: string = ">";
-        private _GREATER_EQ: string = ">=";
-        private _LESS: string = "<";
-        private _LESS_EQ: string = "<=";
-        private _IN: string = "in";
-        private _NOTIN: string = "!in";
+        private _textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._NULL, this._NOTEQUALS, this._NOT_NULL];
+        private _dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
+        private _nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
+        private _boolConditions = ["True", "False"];
+        private _propSelect: HTMLSelectElement;
+
+        setLanguage() {
+
+        }
 
         private _props: Array<IsbFiterProperty>;
         private _fltrConfig: IsbConfig;
@@ -61,7 +287,7 @@ module com.contrivedexample.isbjs {
             this._propSelect = this.createPropSelect();
         }
 
-        render() : void {           
+        render(): void {
             var theUl: HTMLUListElement =
                 <HTMLUListElement>document.querySelector("#" + this._fltrConfig.divName);
             theUl.innerHTML = "";
@@ -81,9 +307,9 @@ module com.contrivedexample.isbjs {
             }
             return propSelect;
         }
-        
-        //called recursively on the backing array, "expressions" to keep the data and UI in sync
-        addCriteria(arr: Array<any>, ul: HTMLUListElement):void {
+
+        //called recursively on the backing array, "expressions", to keep the data and UI in sync
+        addCriteria(arr: Array<any>, ul: HTMLUListElement): void {
             var newul: HTMLUListElement;
             for (var i = 0; i < arr.length; i++) {
                 if (typeof arr[i] == "string") {
@@ -127,8 +353,8 @@ module com.contrivedexample.isbjs {
                         var opersel = this.buildOperatorSelect(arr[i].dataType);
                         opersel.value = arr[i].oper;
                         var propsel = this.buildPropSelect(i, arr);
-                       // propsel["operator"] = opersel; //assign it an operator select so we can change the datatype of items
-                        
+                        // propsel["operator"] = opersel; //assign it an operator select so we can change the datatype of items
+
                         fltrRow.appendChild(propsel);
                         fltrRow.appendChild(opersel);
 
@@ -136,18 +362,24 @@ module com.contrivedexample.isbjs {
                             case this._TEXT:
                             case this._NUMBER:
                             case this._DATE:
-                                var inp = document.createElement("input");
-                                inp.setAttribute("size", "10");
-                                inp.setAttribute("type", arr[i].dataType);
-                                inp.setAttribute("value", arr[i].cnst);
-                                propsel["inpt"] = inp;
-                                inp.onchange = (function (idx: number, that) {
+
+                                if (arr[i].oper === this._NULL || arr[i].oper === this._NOT_NULL) {
+
+                                } else {
+                                    var inp = document.createElement("input");
+                                    inp.setAttribute("size", "10");
+                                    inp.setAttribute("type", arr[i].dataType);
+                                    inp.setAttribute("value", arr[i].cnst);
+                                    propsel["inpt"] = inp;
+                                    inp.onchange = (function (idx: number, that) {
                                     return function () {
-                                        arr[idx].cnst = this.value;
-                                    }
+                                            arr[idx].cnst = this.value;
+                                        }
                                 })(i, this);
 
-                                fltrRow.appendChild(inp);
+                                    fltrRow.appendChild(inp);
+                                }                              
+
                                 break;
                             case this._BOOL:
                                 break;
@@ -160,7 +392,7 @@ module com.contrivedexample.isbjs {
                         propsel.onchange = (function (idx: number, that) {
                             return function () {
                                 arr[idx].prop = this.value;
-                                
+
                                 //find the datatype of the item the user just selected
                                 for (var propIdx = 0; propIdx < that._props.length; propIdx++) {
                                     if (that._props[propIdx].value === this.value) {
@@ -171,12 +403,13 @@ module com.contrivedexample.isbjs {
                                 //re-render the widget so that the appropriate operators are shown for this choice
                                 that.render();
                             }
-                        })(i, this);                        
+                        })(i, this);
 
                         //On change of operator, change backing data to match the choice
                         opersel.onchange = (function (idx: number, that) {
                             return function () {
                                 arr[idx].oper = this.value;
+                                that.render();
                             };
                         })(i, this);
                     }
