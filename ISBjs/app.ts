@@ -50,7 +50,7 @@ module com.contrivedexample.isbjs {
         //classes and attributes for the and/or <li>
         andOrLiClass: string;
         andOrLiAttributes: Array<IsbAttributes>;
-        
+
         //classes and attributes for the and/or select options
         andOrOptClass: string;
         andOrOptAttributes: Array<IsbAttributes>;
@@ -74,7 +74,9 @@ module com.contrivedexample.isbjs {
         andOrSelClass: string;
         andOrSelAttributes: Array<IsbAttributes>;
 
+        ulName: string;
         divName: string;
+        defaultDataType: string;
         langmap: ILangMap;
     }
 
@@ -83,7 +85,7 @@ module com.contrivedexample.isbjs {
         value: string;
         dataType: string;
     }
-    
+
     export class Isb {
 
         private _TEXT: string = "text";
@@ -92,8 +94,9 @@ module com.contrivedexample.isbjs {
         private _DATE: string = "date";
 
         //String literals. May be redefined by configuration
-        private _DEFINE_SEARCH: string;
-        private _RESET: string;
+        private _DEFINE_SEARCH: string; //Text on the button that initially builds the search
+        private _RESET: string; //Text on the button to reset/clear the search and start over
+        private _DEFTYPE: string; //the default data type to use for new filter rows/items
         private _EQUALS: string;
         private _NOTEQUALS: string;
         private _STARTS_WITH: string;
@@ -117,12 +120,16 @@ module com.contrivedexample.isbjs {
         private _dateConditions: Array<string>;
         private _nbrConditions: Array<string>;
         private _boolConditions: Array<string>;
+        private _defaultConditions: Array<string>;
 
         private _propSelect: HTMLSelectElement;
 
         private _props: Array<IsbFiterProperty>;
         private _fltrConfig: IsbConfig;
 
+        /*****************************************************************************************
+        * CONSTRUCTOR
+        *****************************************************************************************/
         constructor(fltrConfig: IsbConfig) {
             this._fltrConfig = fltrConfig;
             this._props = [];
@@ -133,34 +140,83 @@ module com.contrivedexample.isbjs {
 
             this._EQUALS = usingLang ? fltrConfig.langmap.equal : "Is equal to";
             this._NOTEQUALS = usingLang ? fltrConfig.langmap.notequal : "Is not equal to";
-            this._STARTS_WITH =usingLang ? fltrConfig.langmap.startswith : "Starts with";
-            this._ENDS_WITH = usingLang ?fltrConfig.langmap.endswith : "Ends with";
-            this._TRUE = usingLang ?fltrConfig.langmap.istrue : "Is true";
-            this._FALSE = usingLang ?fltrConfig.langmap.isfalse : "Is false";
-            this._NULL = usingLang ?fltrConfig.langmap.isnull: "Is null";
-            this._NOT_NULL = usingLang ?fltrConfig.langmap.isnotnull: "Is not null";
-            this._CONTAINS = usingLang ?fltrConfig.langmap.contains: "Contains";
-            this._GREATER = usingLang ?fltrConfig.langmap.greater: "Is greater than";
-            this._GREATER_EQ = usingLang ?fltrConfig.langmap.greatereq: "Is greater than or equal to";
-            this._LESS = usingLang ?fltrConfig.langmap.less : "Is less than";
-            this._LESS_EQ = usingLang ?fltrConfig.langmap.lesseq : "Is less than or equal to";
-            this._IN = usingLang ?fltrConfig.langmap.isin: "Is in";
-            this._NOTIN = usingLang ?fltrConfig.langmap.isnotin: "Is not in";
-            this._DEFINE_SEARCH = usingLang ?fltrConfig.langmap.defsrch : "Define Search";
+            this._STARTS_WITH = usingLang ? fltrConfig.langmap.startswith : "Starts with";
+            this._ENDS_WITH = usingLang ? fltrConfig.langmap.endswith : "Ends with";
+            this._TRUE = usingLang ? fltrConfig.langmap.istrue : "Is true";
+            this._FALSE = usingLang ? fltrConfig.langmap.isfalse : "Is false";
+            this._NULL = usingLang ? fltrConfig.langmap.isnull : "Is null";
+            this._NOT_NULL = usingLang ? fltrConfig.langmap.isnotnull : "Is not null";
+            this._CONTAINS = usingLang ? fltrConfig.langmap.contains : "Contains";
+            this._GREATER = usingLang ? fltrConfig.langmap.greater : "Is greater than";
+            this._GREATER_EQ = usingLang ? fltrConfig.langmap.greatereq : "Is greater than or equal to";
+            this._LESS = usingLang ? fltrConfig.langmap.less : "Is less than";
+            this._LESS_EQ = usingLang ? fltrConfig.langmap.lesseq : "Is less than or equal to";
+            this._IN = usingLang ? fltrConfig.langmap.isin : "Is in";
+            this._NOTIN = usingLang ? fltrConfig.langmap.isnotin : "Is not in";
+            this._DEFINE_SEARCH = usingLang ? fltrConfig.langmap.defsrch : "Define Search";
             this._RESET = usingLang ? fltrConfig.langmap.reset : "Reset";
-            
+            this._DEFTYPE = fltrConfig.defaultDataType &&
+            (fltrConfig.defaultDataType === "text" || fltrConfig.defaultDataType === "date" ||
+            fltrConfig.defaultDataType === "bool" || fltrConfig.defaultDataType === "number") ?
+            fltrConfig.defaultDataType : "text";
+
+            switch (fltrConfig.defaultDataType) {
+                case "text":
+                    this._defaultConditions = this._textConditions;
+                    break;
+                case "date":
+                    this._defaultConditions = this._dateConditions;
+                    break;
+                case "bool":
+                    this._defaultConditions = this._boolConditions;
+                    break;
+                case "number":
+                    this._defaultConditions = this._nbrConditions;
+                    break;
+                default:
+                    this._defaultConditions = this._textConditions;
+            }
+
             this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._NULL, this._NOTEQUALS, this._NOT_NULL];
             this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
             this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
             this._boolConditions = [this._TRUE, this._FALSE];
 
-            this._theExpression = [
-                {
-                    'prop': 'LastName',
-                    'oper': '=',
-                    'cnst': 'Mitchell',
-                    'dataType': 'text'
-                }];
+            this.renderHeader(this);
+            //this._theExpression = [];
+                //{
+                //    'prop': 'LastName',
+                //    'oper': '=',
+                //    'cnst': 'Mitchell',
+                //    'dataType': 'text'
+                //}];
+        }
+
+        renderHeader(that): void {
+
+            //create a div containing a button that builds or resets a search session
+            var goBtn: HTMLButtonElement = document.createElement("button");
+            goBtn.id = "IsbGoBtn";
+            goBtn.appendChild(document.createTextNode(this._DEFINE_SEARCH));
+            goBtn.setAttribute("data-role", "start");
+            goBtn.onclick = function () {
+                var btnRole = this.getAttribute("data-role");
+                if (btnRole === "start") {
+                    this.innerHTML = "Reset";
+                    this.setAttribute("data-role", "reset");
+                }
+
+                that._theExpression = [];
+                that._theExpression.push({
+                    'prop': that._props[0].value,
+                    'oper': that._defaultConditions,
+                    'cnst': '',
+                    'dataType': that._DEFTYPE
+                });
+                that.render();
+            };
+
+            document.querySelector("#" + this._fltrConfig.divName).appendChild(goBtn);
         }
 
         //Add a 'field name' to the list of choices.
@@ -171,10 +227,12 @@ module com.contrivedexample.isbjs {
         }
 
         render(): void {
-            var theUl: HTMLUListElement =
-                <HTMLUListElement>document.querySelector("#" + this._fltrConfig.divName);
-            theUl.innerHTML = "";
-            this.addCriteria(this._theExpression, theUl);
+
+            var theUL: HTMLUListElement =
+                <HTMLUListElement>document.querySelector("#" + this._fltrConfig.ulName);
+            theUL.innerHTML = "";
+
+            this.addCriteria(this._theExpression, theUL);
             console.log(JSON.stringify(this._theExpression));
         }
 
@@ -189,7 +247,7 @@ module com.contrivedexample.isbjs {
             }
 
             //Add any attributes to the Select element if set in the Config
-            if(this.isImplementor(this._fltrConfig.propSelAttributes)) {
+            if (this.implementsAttr(this._fltrConfig.propSelAttributes)) {
                 for (var attrIdx = 0; attrIdx < this._fltrConfig.propSelAttributes.length; attrIdx++) {
                     propSelect.setAttribute(this._fltrConfig.propSelAttributes[attrIdx].attrName,
                         this._fltrConfig.propSelAttributes[attrIdx].attrValue);
@@ -206,11 +264,11 @@ module com.contrivedexample.isbjs {
                 }
 
                 //Add any attributes if set in the Config
-                if (this.isImplementor(this._fltrConfig.propSelOptAttributes)) {
+                if (this.implementsAttr(this._fltrConfig.propSelOptAttributes)) {
                     for (var optIdx = 0; optIdx < this._fltrConfig.propSelOptAttributes.length; optIdx++) {
                         opt.setAttribute(this._fltrConfig.propSelOptAttributes[optIdx].attrName,
                             this._fltrConfig.propSelOptAttributes[optIdx].attrValue);
-                        }
+                    }
                 }
 
                 opt.setAttribute("value", this._props[idx].value);
@@ -220,22 +278,44 @@ module com.contrivedexample.isbjs {
             return propSelect;
         }
 
-        //Checks if the passed objec has an 'attrName' and 'attrValue' property
-        isImplementor(src, ...theProperties: Array<string>): boolean {
+        //Checks if the passed object has an 'attrName' and 'attrValue' property.
+        implementsAttr(src): boolean {
+            if (src == void 0) {
+                return false;
+            }
+
             for (var idx = 0; idx < src.length; idx++) {
                 if (!(src[idx].hasOwnProperty("attrName") && src[idx].hasOwnProperty("attrValue"))) {
                     return false;
                 }
                 else {
-                    if(!(typeof src[idx].attrName === "string" && typeof src[idx].attrValue === "string")) {
+                    if (!(typeof src[idx].attrName === "string" && typeof src[idx].attrValue === "string")) {
                         return false;
                     }
                 }
             }
-                return true;
+            return true;
         }
 
-        //called recursively on the backing array, "expressions", to keep the data and UI in sync
+        //Checks if the passed object has string-valued "display", "value" and "dataType" properties.
+        implementsFilter(src): boolean {
+
+            if (src == void 0) { return false; }
+
+            if (!(src.hasOwnProperty("display") &&
+                src.hasOwnProperty("value") &&
+                src.hasOwnProperty("dataType"))) {
+                return false;
+            }
+            else {
+                if (!(typeof src.display === "string" && typeof src.value === "string" && typeof src.dataType === "string")) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        //Called recursively on the backing array, "expressions", to keep the data and UI in sync.
         addCriteria(arr: Array<any>, ul: HTMLUListElement): void {
             var newul: HTMLUListElement;
             for (var i = 0; i < arr.length; i++) {
@@ -243,8 +323,12 @@ module com.contrivedexample.isbjs {
 
                     //Create the And/Or ListItem and configure its classes and attributes
                     var andornode = document.createElement("li");
-                    andornode.className = this._fltrConfig.andOrLiClass;
-                    if (this._fltrConfig.andOrLiAttributes != void 0) {
+
+                    if (typeof this._fltrConfig.andOrLiClass === "string") {
+                        andornode.className = this._fltrConfig.andOrLiClass;
+                    }
+
+                    if (this.implementsAttr(this._fltrConfig.propSelOptAttributes)) {
                         for (var andOrIdx = 0; andOrIdx < this._fltrConfig.andOrLiAttributes.length; andOrIdx++) {
                             andornode.setAttribute(this._fltrConfig.andOrLiAttributes[andOrIdx].attrName,
                                 this._fltrConfig.andOrLiAttributes[andOrIdx].attrValue);
@@ -256,16 +340,24 @@ module com.contrivedexample.isbjs {
                     if (typeof this._fltrConfig.andOrSelClass === "string") {
                         andornode.className = this._fltrConfig.andOrSelClass;
                     }
-                    if (this._fltrConfig.andOrSelAttributes != void 0) {
 
-                    }                    
-
+                    //create the and/or options and set class names and attributes
                     var andOpt = document.createElement("option");
                     andOpt.setAttribute("value", "AND");
                     andOpt.appendChild(document.createTextNode("AND"));
+
                     var orOpt = document.createElement("option");
                     orOpt.setAttribute("value", "OR");
                     orOpt.appendChild(document.createTextNode("OR"));
+
+                    if (this.implementsFilter(this._fltrConfig.andOrOptAttributes)) {
+                        for (var andOrOptIdx = 0; andOrOptIdx < this._fltrConfig.andOrOptAttributes.length; andOrOptIdx++) {
+                            andOpt.setAttribute(this._fltrConfig.andOrOptAttributes[andOrOptIdx].attrName,
+                                this._fltrConfig.andOrOptAttributes[andOrOptIdx].attrValue);
+                            orOpt.setAttribute(this._fltrConfig.andOrOptAttributes[andOrOptIdx].attrName,
+                                this._fltrConfig.andOrOptAttributes[andOrOptIdx].attrValue);
+                        }
+                    }
 
                     andOrSelect.onchange = (function (idx: number) {
                         return function () { arr[idx] = this.value; };
@@ -284,13 +376,23 @@ module com.contrivedexample.isbjs {
                 else {
                     if (arr[i] instanceof Array) {
                         newul = document.createElement("ul");
-                        newul.className = this._fltrConfig.listClass;
+                        if (typeof this._fltrConfig.listClass === "string") {
+                            newul.className = this._fltrConfig.listClass;
+                        }
                         ul.appendChild(newul);
                         this.addCriteria(arr[i], newul);
                     } else {
                         var fltrRow = document.createElement("li");
-                        fltrRow.className = this._fltrConfig.listItemClass;
-                        
+                        if (typeof this._fltrConfig.listItemClass === "string") {
+                            fltrRow.className = this._fltrConfig.listItemClass;
+                        }
+                        if (this.implementsAttr(this._fltrConfig.listItemAttributes)) {
+                            for (var liIdx = 0; liIdx < this._fltrConfig.listItemAttributes.length; liIdx++) {
+                                fltrRow.setAttribute(this._fltrConfig.listItemAttributes[liIdx].attrName,
+                                    this._fltrConfig.listItemAttributes[liIdx].attrValue);
+                            }
+                        }
+
                         var opersel = this.buildOperatorSelect(arr[i].dataType);
                         opersel.value = arr[i].oper;
                         var propsel = this.buildPropSelect(i, arr);
@@ -365,6 +467,11 @@ module com.contrivedexample.isbjs {
 
         buildOperatorSelect(whichoper): HTMLSelectElement {
             var operSelect = document.createElement("select");
+
+            if (typeof this._fltrConfig.operSelClass === "string") {
+                operSelect.className = this._fltrConfig.operSelClass;
+            }
+
             var whichlist;
             switch (whichoper) {
                 case this._TEXT:
@@ -381,9 +488,25 @@ module com.contrivedexample.isbjs {
                     break;
             }
 
+            var doSetAttr = this.implementsAttr(this._fltrConfig.operSelOptAttributes);
+            var doSetClass = typeof this._fltrConfig.operSelOptClass === "string";
+
             for (var idx = 0; idx < whichlist.length; idx++) {
                 var opt = document.createElement("option");
+
+                if (doSetClass) {
+                    opt.className = this._fltrConfig.operSelOptClass;
+                }
+
                 opt.setAttribute("value", whichlist[idx]);
+
+                if (doSetAttr) {
+                    for (var operIdx = 0; operIdx < this._fltrConfig.operSelOptAttributes.length; operIdx++) {
+                        opt.setAttribute(this._fltrConfig.operSelOptAttributes[operIdx].attrName,
+                            this._fltrConfig.operSelOptAttributes[operIdx].attrValue);
+                    }
+                }
+
                 opt.appendChild(document.createTextNode(whichlist[idx]));
                 operSelect.appendChild(opt);
             }
@@ -398,16 +521,16 @@ module com.contrivedexample.isbjs {
             if (pOrf === "p") {
                 pushObj = {
                     'prop': this._props[0].value,
-                    'oper': this._textConditions[0],
-                    'cnst': '?',
-                    'dataType': 'text'
+                    'oper': this._defaultConditions,
+                    'cnst': '',
+                    'dataType': this._DEFTYPE
                 };
             } else {
                 pushObj = [{
                     'prop': this._props[0].value,
-                    'oper': this._textConditions[0],
-                    'cnst': '?',
-                    'dataType': 'text'
+                    'oper': this._defaultConditions,
+                    'cnst': '',
+                    'dataType': this._DEFTYPE
                 }];
             }
 
@@ -430,9 +553,9 @@ module com.contrivedexample.isbjs {
                         whicharray.splice(idx + 1, 0, "AND",
                             {
                                 'prop': this.props[0].value,
-                                'oper': this.textConditions[0],
-                                'cnst': '?',
-                                'dataType': 'text'
+                                'oper': this._defaultConditions,
+                                'cnst': '',
+                                'dataType': this._DEFTYPE
                             });
                         that.render();
                     }

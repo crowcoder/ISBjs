@@ -7,23 +7,61 @@
     <script src="app.js"></script>
 </head>
 <body>
-    <div id="content">
+    <div>
+        <div id="content">
 
+        </div>
+        <ul id="srchUL"></ul>
     </div>
+
     <script>
 
         window.onload = function () {
+
+            var langmap = {
+                "equal": "Is equal to",
+                "notequal": "<>",
+                "startswith": "Starts with",
+                "endswith": "Ends with",
+                "istrue": "Is true",
+                "isfalse": "Is false",
+                "isnull": "Is Null",
+                "isnotnull": "Is not null",
+                "contains": "Contains",
+                "greater": ">",
+                "greatereq": ">=",
+                "less": "<",
+                "lesseq": "<=",
+                "isin": "Is in",
+                "isnotin": "Is not in",
+                "defsrch": "Define Search",
+                "reset": "Reset"
+            }
+
             var isb = new com.contrivedexample.isbjs.Isb({
-                "listClass": "none",
-                "listItemClass": "none",
-                "divName": "content"
+                "listClass": "ThisIsAList",
+                "listItemClass": "LIclass1 LIclass2",
+                "propSelClass": "PropSelClass NoClass",
+                "propSelAttributes": [
+                    { "attr_Name": "MyAttr1", "attrValue": "aOne" },
+                    { "attr_Name": "MyAttr2", "attrValue": "aTwo" }
+                ],
+                "divName": "content",
+                "ulName": "srchUL",
+                "propSelOptAttributes": [
+                    { "attr_Name": "data-toggle", "attrValue": "foo" },
+                    { "attr_Name": "data-role", "attrValue": "superman" }
+                ],
+                "propSelOptClass": "marque spin"
             });
+
+
             isb.addFilterProperty({ "display": "Last Name", "value": "lastname", "dataType": "text" });
             isb.addFilterProperty({ "display": "Age", "value": "age", "dataType": "number" });
             isb.addFilterProperty({ "display": "Gender", "value": "gender", "dataType": "text" });
             isb.addFilterProperty({ "display": "DOB", "value": "dob", "dataType": "date" })
             isb.addFilterProperty({ "display": "Is Vested", "value": "vested", "dataType": "bool" })
-            isb.render();
+            //isb.render();
         };
 
     </script>
