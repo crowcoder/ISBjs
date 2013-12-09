@@ -7,12 +7,21 @@
     margin: 0;
     margin-right: 3px;
     border-radius:4px;
-    background: linear-gradient(top, #FBFBFB 0%, #E9E9E9 100%);    
+    background: linear-gradient(0deg, #FBFBFB, #E9E9E9 100%);    
     color:black;
     border:none;
     outline:none;
     display: inline-block;
     cursor:pointer;
+    border: 1px solid #ccc;
+}
+
+.isbinput {
+    padding:3px;
+    margin: 0;
+    margin-right: 3px;
+    border-radius:4px;
+    color:black;
     border: 1px solid #ccc;
 }
 

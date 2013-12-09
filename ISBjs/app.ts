@@ -186,13 +186,6 @@ module com.contrivedexample.isbjs {
             }
                         
             this.renderHeader(this);
-            //this._theExpression = [];
-                //{
-                //    'prop': 'LastName',
-                //    'oper': '=',
-                //    'cnst': 'Mitchell',
-                //    'dataType': 'text'
-                //}];
         }
 
         renderHeader(that): void {
@@ -412,7 +405,7 @@ module com.contrivedexample.isbjs {
 
                                 } else {
                                     var inp = document.createElement("input");
-                                    inp.className = "isbselect"; //TODO: don't leave this like this!
+                                    inp.className = "isbinput"; //TODO: don't leave this like this!
                                     inp.setAttribute("size", "10");
                                     inp.setAttribute("type", arr[i].dataType);
                                     inp.setAttribute("value", arr[i].cnst);
@@ -548,27 +541,7 @@ module com.contrivedexample.isbjs {
                 })(thearray, pos, pushObj, that);
             return btn;
         }
-
-        //buildPlus(pos: number, thearray: Array<any>, that): HTMLButtonElement {
-        //    var plusBtn = document.createElement("button");
-        //    plusBtn.appendChild(document.createTextNode("+"));
-        //    plusBtn.onclick = (
-        //        function (whicharray: Array<any>, idx: number, that: any) {
-        //                return function () {
-        //                whicharray.splice(idx + 1, 0, "AND",
-        //                    {
-        //                        'prop': this.props[0].value,
-        //                        'oper': this._defaultConditions,
-        //                        'cnst': '',
-        //                        'dataType': this._DEFTYPE
-        //                    });
-        //                that.render();
-        //            }
-        //            }
-        //        )(thearray, pos, that);
-        //    return plusBtn;
-        //}
-
+        
         //Parses the search builder to an array of two strings.
         //The first string is the "where" clause and the second is the list of
         //parameters required to execute the where clause.
