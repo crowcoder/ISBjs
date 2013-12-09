@@ -2,6 +2,24 @@
     font-family: 'Segoe UI', sans-serif;
 }
 
+.isbselect {
+    padding:3px;
+    margin: 0;
+    margin-right: 3px;
+    border-radius:4px;
+    background: linear-gradient(top, #FBFBFB 0%, #E9E9E9 100%);    
+    color:black;
+    border:none;
+    outline:none;
+    display: inline-block;
+    cursor:pointer;
+    border: 1px solid #ccc;
+}
+
 span {
     font-style: italic;
+}
+
+.ibsLi {
+    list-style: none;
 }
