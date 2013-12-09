@@ -93,6 +93,9 @@ module com.contrivedexample.isbjs {
         private _BOOL: string = "bool";
         private _DATE: string = "date";
 
+        private _sql: string; // var to hold the sql code as it is being constructed
+        private _params: Array<string> = [];
+
         //String literals. May be redefined by configuration
         private _DEFINE_SEARCH: string; //Text on the button that initially builds the search
         private _RESET: string; //Text on the button to reset/clear the search and start over
@@ -160,6 +163,11 @@ module com.contrivedexample.isbjs {
             fltrConfig.defaultDataType === "bool" || fltrConfig.defaultDataType === "number") ?
             fltrConfig.defaultDataType : "text";
 
+            this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._NULL, this._NOTEQUALS, this._NOT_NULL];
+            this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
+            this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
+            this._boolConditions = [this._TRUE, this._FALSE];
+
             switch (fltrConfig.defaultDataType) {
                 case "text":
                     this._defaultConditions = this._textConditions;
@@ -176,12 +184,7 @@ module com.contrivedexample.isbjs {
                 default:
                     this._defaultConditions = this._textConditions;
             }
-
-            this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._NULL, this._NOTEQUALS, this._NOT_NULL];
-            this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
-            this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
-            this._boolConditions = [this._TRUE, this._FALSE];
-
+                        
             this.renderHeader(this);
             //this._theExpression = [];
                 //{
@@ -209,7 +212,7 @@ module com.contrivedexample.isbjs {
                 that._theExpression = [];
                 that._theExpression.push({
                     'prop': that._props[0].value,
-                    'oper': that._defaultConditions,
+                    'oper': that._defaultConditions[0],
                     'cnst': '',
                     'dataType': that._DEFTYPE
                 });
@@ -338,7 +341,7 @@ module com.contrivedexample.isbjs {
                     //Create the And/Or <select> and configure its classes and attributes
                     var andOrSelect = document.createElement("select");
                     if (typeof this._fltrConfig.andOrSelClass === "string") {
-                        andornode.className = this._fltrConfig.andOrSelClass;
+                        andOrSelect.className = this._fltrConfig.andOrSelClass;
                     }
 
                     //create the and/or options and set class names and attributes
@@ -409,6 +412,7 @@ module com.contrivedexample.isbjs {
 
                                 } else {
                                     var inp = document.createElement("input");
+                                    inp.className = "isbselect"; //TODO: don't leave this like this!
                                     inp.setAttribute("size", "10");
                                     inp.setAttribute("type", arr[i].dataType);
                                     inp.setAttribute("value", arr[i].cnst);
@@ -515,54 +519,156 @@ module com.contrivedexample.isbjs {
 
         buildPlusOrFork(pos: number, thearray: Array<any>, pOrf: string, offset: number, that): HTMLButtonElement {
             var btn = document.createElement("button");
+            
             btn.appendChild(document.createTextNode(pOrf === "p" ? "+" : "( )"));
 
             var pushObj: any;
             if (pOrf === "p") {
                 pushObj = {
                     'prop': this._props[0].value,
-                    'oper': this._defaultConditions,
+                    'oper': this._defaultConditions[0],
                     'cnst': '',
                     'dataType': this._DEFTYPE
                 };
             } else {
                 pushObj = [{
                     'prop': this._props[0].value,
-                    'oper': this._defaultConditions,
+                    'oper': this._defaultConditions[0],
                     'cnst': '',
                     'dataType': this._DEFTYPE
                 }];
             }
 
             btn.onclick = (
-                function (whicharray: Array<any>, idx: number, that: any) {
+                function (whicharray: Array<any>, idx: number, pushobj:any, that: any) {
                     return function () {
-                        whicharray.splice(idx + offset, 0, "AND", pushObj);
+                        whicharray.splice(idx + offset, 0, "AND", pushobj);
                         that.render();
                     }
-                })(thearray, pos, that);
+                })(thearray, pos, pushObj, that);
             return btn;
         }
 
-        buildPlus(pos: number, thearray: Array<any>, that): HTMLButtonElement {
-            var plusBtn = document.createElement("button");
-            plusBtn.appendChild(document.createTextNode("+"));
-            plusBtn.onclick = (
-                function (whicharray: Array<any>, idx: number, that: any) {
-                        return function () {
-                        whicharray.splice(idx + 1, 0, "AND",
-                            {
-                                'prop': this.props[0].value,
-                                'oper': this._defaultConditions,
-                                'cnst': '',
-                                'dataType': this._DEFTYPE
-                            });
-                        that.render();
-                    }
-                    }
-                )(thearray, pos, that);
-            return plusBtn;
+        //buildPlus(pos: number, thearray: Array<any>, that): HTMLButtonElement {
+        //    var plusBtn = document.createElement("button");
+        //    plusBtn.appendChild(document.createTextNode("+"));
+        //    plusBtn.onclick = (
+        //        function (whicharray: Array<any>, idx: number, that: any) {
+        //                return function () {
+        //                whicharray.splice(idx + 1, 0, "AND",
+        //                    {
+        //                        'prop': this.props[0].value,
+        //                        'oper': this._defaultConditions,
+        //                        'cnst': '',
+        //                        'dataType': this._DEFTYPE
+        //                    });
+        //                that.render();
+        //            }
+        //            }
+        //        )(thearray, pos, that);
+        //    return plusBtn;
+        //}
+
+        //Parses the search builder to an array of two strings.
+        //The first string is the "where" clause and the second is the list of
+        //parameters required to execute the where clause.
+        parseForLinq() : Array<string> {
+            this.parseToLinq(this._theExpression);
+            var sqlstring = this._sql;
+            var paramstring = this._params.join(",");
+            this._sql = "";
+            this._params = [];
+            return [sqlstring, paramstring];
         }
 
+        //Parses the backing array to a string suitable for use in a Dynamic Linq where clause.
+        private parseToLinq(arr) : void {
+
+            for (var i = 0; i < arr.length; i++) {
+                if (typeof arr[i] == "string") {
+                    this._sql += " " + arr[i] + " ";
+                }
+                else {
+                    if (arr[i] instanceof Array) {
+                        this._sql += "(";
+                        this.parseToLinq(arr[i]);
+                        this._sql += ")";
+                    } else {
+                        var theOperator;
+                        switch (arr[i].oper) {
+                            case this._EQUALS:
+                                theOperator = ".Equals(@" + this._params.length + ")";
+                                this._params.push(arr[i].cnst);
+                                break;
+                            case this._LESS:
+                                if (arr[i].dataType === "date") {
+                                    theOperator = " < Convert.ToDateTime(@" + this._params.length + ")";
+                                    this._params.push(arr[i].cnst);
+                                } else {
+                                    theOperator = " < " + arr[i].cnst;
+                                }
+                                break;
+                            case this._LESS_EQ:
+                                if (arr[i].dataType === "date") {
+                                    theOperator = " <= Convert.ToDateTime(@" + this._params.length + ")";
+                                    this._params.push(arr[i].cnst);
+                                } else {
+                                    theOperator = " <= " + arr[i].cnst;
+                                }
+                                break;
+                            case this._GREATER:
+                                if (arr[i].dataType === "date") {
+                                    theOperator = " > Convert.ToDateTime(@" + this._params.length + ")";
+                                    this._params.push(arr[i].cnst);
+                                } else {
+                                    theOperator = " > " + arr[i].cnst;
+                                }
+                                break;
+                            case this._GREATER_EQ:
+                                if (arr[i].dataType === "date") {
+                                    theOperator = " >= Convert.ToDateTime(@" + this._params.length + ")";
+                                    this._params.push(arr[i].cnst);
+                                } else {
+                                    theOperator = " >= " + arr[i].cnst;
+                                }
+                                break;
+                            case this._STARTS_WITH:
+                                theOperator = ".StartsWith(@" + this._params.length + ")";
+                                this._params.push(arr[i].cnst);
+                                break;
+                            case this._ENDS_WITH:
+                                theOperator = ".EndsWith(@" + this._params.length + ")";
+                                this._params.push(arr[i].cnst);
+                                break;
+                            case this._NULL:
+                                theOperator = " ** need to research **";
+                                break;
+                            case this._NOT_NULL:
+                                theOperator = " ** need to research **";
+                                break;
+                            case this._CONTAINS:
+                                theOperator = ".Contains(@" + this._params.length + ")";
+                                this._params.push(arr[i].cnst);
+                                break;
+                            case this._TRUE:
+                                theOperator = " = True ";
+                                break;
+                            case this._FALSE:
+                                theOperator = " = False ";
+                                break;
+                            default:
+                                theOperator = " default " + arr[i].cnst;;
+
+                        }
+
+                        if (this._sql == void 0) {
+                            this._sql = '';
+                        }
+
+                        this._sql += " " + arr[i].prop + theOperator;
+                    }
+                }
+            }            
+        }
     }
 }
