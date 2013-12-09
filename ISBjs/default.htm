@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>TypeScript HTML App</title>
     <link rel="stylesheet" href="app.css" type="text/css" />
-    <script src="app.js"></script>
+    
 </head>
 <body>
     <div>
@@ -13,9 +13,14 @@
         </div>
         <ul id="srchUL"></ul>
     </div>
+    <button id="parseBtn" onclick="parse();">Parse</button>
+    <div id="dynLinq"></div>
+    <div id="sql"></div>
+    <div id="linqExpr"></div>
 
+    <script src="app.js"></script>
     <script>
-
+        var isb;
         window.onload = function () {
 
             var langmap = {
@@ -38,10 +43,13 @@
                 "reset": "Reset"
             }
 
-            var isb = new com.contrivedexample.isbjs.Isb({
-                "listClass": "ThisIsAList",
-                "listItemClass": "LIclass1 LIclass2",
-                "propSelClass": "PropSelClass NoClass",
+            isb = new com.contrivedexample.isbjs.Isb({
+                "listClass": "ibsLi",
+                "listItemClass": "ibsLi",
+                "andOrLiClass": "ibsLi",
+                "propSelClass": "isbselect",
+                "operSelClass": "isbselect",
+                "andOrSelClass": "isbselect",
                 "propSelAttributes": [
                     { "attr_Name": "MyAttr1", "attrValue": "aOne" },
                     { "attr_Name": "MyAttr2", "attrValue": "aTwo" }
@@ -60,9 +68,16 @@
             isb.addFilterProperty({ "display": "Age", "value": "age", "dataType": "number" });
             isb.addFilterProperty({ "display": "Gender", "value": "gender", "dataType": "text" });
             isb.addFilterProperty({ "display": "DOB", "value": "dob", "dataType": "date" })
-            isb.addFilterProperty({ "display": "Is Vested", "value": "vested", "dataType": "bool" })
+            isb.addFilterProperty({ "display": "Is Vested", "value": "vested", "dataType": "bool" })            
             //isb.render();
         };
+
+        function parse() {
+            var linqresults = isb.parseForLinq();
+            var dynlnq = document.querySelector("#dynLinq");
+            dynlnq.innerHTML = '';
+            dynlnq.innerHTML = linqresults.join();
+        }
 
     </script>
 </body>
