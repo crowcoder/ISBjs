@@ -14,6 +14,7 @@
                     this._params = [];
                     this._fltrConfig = fltrConfig;
                     this._props = [];
+                    this._theInputs = [];
 
                     //if a language map was supplied, use those values for the string literals
                     //otherwise default to English
@@ -99,7 +100,7 @@
                 Isb.prototype.render = function () {
                     var theUL = document.querySelector("#" + this._fltrConfig.ulName);
                     theUL.innerHTML = "";
-
+                    this._theInputs = [];
                     this.addCriteria(this._theExpression, theUL);
                     console.log(JSON.stringify(this._theExpression));
                 };
@@ -265,7 +266,9 @@
                                         if (arr[i].oper === this._NULL || arr[i].oper === this._NOT_NULL) {
                                         } else {
                                             var inp = document.createElement("input");
-                                            inp.className = "isbinput"; //TODO: don't leave this like this!
+                                            if (typeof this._fltrConfig.valueInputClass === "string") {
+                                                inp.className = this._fltrConfig.valueInputClass;
+                                            }
                                             inp.setAttribute("size", "10");
                                             inp.setAttribute("type", arr[i].dataType);
                                             inp.setAttribute("value", arr[i].cnst);
@@ -273,10 +276,16 @@
                                             inp.onchange = (function (idx, that) {
                                                 return function () {
                                                     arr[idx].cnst = this.value;
+                                                    if (typeof that._fltrConfig.valueInputClass === "string") {
+                                                        if (this.value !== '') {
+                                                            this.className = that._fltrConfig.valueInputClass;
+                                                        }
+                                                    }
                                                 };
                                             })(i, this);
 
                                             fltrRow.appendChild(inp);
+                                            this._theInputs.push(inp);
                                         }
 
                                         break;
@@ -408,12 +417,26 @@
                 //The first string is the "where" clause and the second is the list of
                 //parameters required to execute the where clause.
                 Isb.prototype.parseForLinq = function () {
-                    this.parseToLinq(this._theExpression);
-                    var sqlstring = this._sql;
-                    var paramstring = this._params.join(",");
-                    this._sql = "";
-                    this._params = [];
-                    return [sqlstring, paramstring];
+                    var parseerr = false;
+                    for (var idx = 0; idx < this._theInputs.length; idx++) {
+                        if (this._theInputs[idx].value === '') {
+                            parseerr = true;
+                            if (typeof this._fltrConfig.valueInputErrClass === "string") {
+                                this._theInputs[idx].className = this._theInputs[idx].className + " " + this._fltrConfig.valueInputErrClass;
+                            }
+                        }
+                    }
+
+                    if (!parseerr) {
+                        this.parseToLinq(this._theExpression);
+                        var sqlstring = this._sql;
+                        var paramstring = this._params.join(",");
+                        this._sql = "";
+                        this._params = [];
+                        return [sqlstring, paramstring];
+                    } else {
+                        return ["Missing search values exist"];
+                    }
                 };
 
                 //Parses the backing array to a string suitable for use in a Dynamic Linq where clause.
@@ -492,7 +515,10 @@
                                         var tokens = arr[i].cnst.split(",");
                                         theOperator = "(";
                                         for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                                            theOperator += arr[i].prop + ".Equals(@" + this._params.length + ") Or ";
+                                            theOperator += arr[i].prop + ".Equals(@" + this._params.length + ") ";
+                                            if (tokIdx !== tokens.length - 1) {
+                                                theOperator += "OR ";
+                                            }
                                             this._params.push(tokens[tokIdx]);
                                         }
                                         theOperator += ") ";

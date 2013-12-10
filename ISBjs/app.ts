@@ -73,6 +73,7 @@ module com.contrivedexample.isbjs {
 
         valueInputClass: string;
         valueInputAttributes: Array<IsbAttributes>;
+        valueInputErrClass: string;
 
         andOrSelClass: string;
         andOrSelAttributes: Array<IsbAttributes>;
@@ -95,6 +96,8 @@ module com.contrivedexample.isbjs {
         private _NUMBER: string = "number";
         private _BOOL: string = "bool";
         private _DATE: string = "date";
+
+        private _theInputs: Array<HTMLInputElement>;
 
         private _sql: string; // var to hold the sql code as it is being constructed
         private _params: Array<string> = [];
@@ -139,6 +142,7 @@ module com.contrivedexample.isbjs {
         constructor(fltrConfig: IsbConfig) {
             this._fltrConfig = fltrConfig;
             this._props = [];
+            this._theInputs = [];
 
             //if a language map was supplied, use those values for the string literals
             //otherwise default to English
@@ -167,8 +171,8 @@ module com.contrivedexample.isbjs {
             fltrConfig.defaultDataType : "text";
 
             this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._IN, this._NULL, this._NOTEQUALS, this._NOT_NULL];
-            this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN,this._NULL, this._NOT_NULL];
-            this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN,this._NULL, this._NOT_NULL];
+            this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
+            this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
             this._boolConditions = [this._TRUE, this._FALSE];
 
             switch (fltrConfig.defaultDataType) {
@@ -187,7 +191,7 @@ module com.contrivedexample.isbjs {
                 default:
                     this._defaultConditions = this._textConditions;
             }
-                        
+
             this.renderHeader(this);
         }
 
@@ -230,7 +234,7 @@ module com.contrivedexample.isbjs {
             var theUL: HTMLUListElement =
                 <HTMLUListElement>document.querySelector("#" + this._fltrConfig.ulName);
             theUL.innerHTML = "";
-
+            this._theInputs = [];
             this.addCriteria(this._theExpression, theUL);
             console.log(JSON.stringify(this._theExpression));
         }
@@ -408,7 +412,9 @@ module com.contrivedexample.isbjs {
 
                                 } else {
                                     var inp = document.createElement("input");
-                                    inp.className = "isbinput"; //TODO: don't leave this like this!
+                                    if (typeof this._fltrConfig.valueInputClass === "string") {
+                                        inp.className = this._fltrConfig.valueInputClass;
+                                    }
                                     inp.setAttribute("size", "10");
                                     inp.setAttribute("type", arr[i].dataType);
                                     inp.setAttribute("value", arr[i].cnst);
@@ -416,10 +422,16 @@ module com.contrivedexample.isbjs {
                                     inp.onchange = (function (idx: number, that) {
                                     return function () {
                                             arr[idx].cnst = this.value;
+                                            if (typeof that._fltrConfig.valueInputClass === "string") {
+                                                if (this.value !== '') {
+                                                    this.className = that._fltrConfig.valueInputClass;
+                                                }
+                                            }
                                         }
                                 })(i, this);
 
                                     fltrRow.appendChild(inp);
+                                    this._theInputs.push(inp);
                                 }
 
                                 break;
@@ -519,7 +531,7 @@ module com.contrivedexample.isbjs {
             if (typeof this._fltrConfig.btnClass === "string") {
                 btn.className = this._fltrConfig.btnClass;
             }
-            
+
             btn.appendChild(document.createTextNode(pOrf === "p" ? "+" : "( )"));
 
             var pushObj: any;
@@ -540,7 +552,7 @@ module com.contrivedexample.isbjs {
             }
 
             btn.onclick = (
-                function (whicharray: Array<any>, idx: number, pushobj:any, that: any) {
+                function (whicharray: Array<any>, idx: number, pushobj: any, that: any) {
                     return function () {
                         whicharray.splice(idx + offset, 0, "AND", pushobj);
                         that.render();
@@ -548,21 +560,36 @@ module com.contrivedexample.isbjs {
                 })(thearray, pos, pushObj, that);
             return btn;
         }
-        
+
         //Parses the search builder to an array of two strings.
         //The first string is the "where" clause and the second is the list of
         //parameters required to execute the where clause.
-        parseForLinq() : Array<string> {
-            this.parseToLinq(this._theExpression);
-            var sqlstring = this._sql;
-            var paramstring = this._params.join(",");
-            this._sql = "";
-            this._params = [];
-            return [sqlstring, paramstring];
+        parseForLinq(): Array<string> {
+            var parseerr = false;
+            for (var idx = 0; idx < this._theInputs.length; idx++) {
+                if (this._theInputs[idx].value === '') {
+                    parseerr = true;
+                    if (typeof this._fltrConfig.valueInputErrClass === "string") {
+                        this._theInputs[idx].className = this._theInputs[idx].className + " " + this._fltrConfig.valueInputErrClass;
+                    }                    
+                }
+            }
+
+            if (!parseerr) {
+                this.parseToLinq(this._theExpression);
+                var sqlstring = this._sql;
+                var paramstring = this._params.join(",");
+                this._sql = "";
+                this._params = [];
+                return [sqlstring, paramstring];
+            }
+            else {
+                return ["Missing search values exist"];
+            }
         }
 
         //Parses the backing array to a string suitable for use in a Dynamic Linq where clause.
-        private parseToLinq(arr) : void {
+        private parseToLinq(arr): void {
 
             if (!arr) {throw "Backing array is undefined" };
 
@@ -607,7 +634,7 @@ module com.contrivedexample.isbjs {
                                     theOperator = " " + arr[i].prop + " > Convert.ToDateTime(@" + this._params.length + ")";
                                     this._params.push(arr[i].cnst);
                                 } else {
-                                    theOperator = " " + arr[i].prop +  " > " + arr[i].cnst;
+                                    theOperator = " " + arr[i].prop + " > " + arr[i].cnst;
                                 }
                                 break;
                             case this._GREATER_EQ:
@@ -627,7 +654,7 @@ module com.contrivedexample.isbjs {
                                 this._params.push(arr[i].cnst);
                                 break;
                             case this._NULL:
-                                theOperator = " " + arr[i].prop +  " = Null";
+                                theOperator = " " + arr[i].prop + " = Null";
                                 break;
                             case this._NOT_NULL:
                                 theOperator = " " + arr[i].prop + " Not = Null";
@@ -636,9 +663,12 @@ module com.contrivedexample.isbjs {
                                 var tokens = arr[i].cnst.split(",");
                                 theOperator = "(";
                                 for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                                    theOperator += arr[i].prop + ".Equals(@" + this._params.length + ") Or ";
+                                    theOperator += arr[i].prop + ".Equals(@" + this._params.length + ") ";
+                                    if (tokIdx !== tokens.length - 1) {
+                                        theOperator += "OR ";
+                                    }
                                     this._params.push(tokens[tokIdx]);
-                                }                                
+                                }
                                 theOperator += ") ";
                                 break;
                             case this._CONTAINS:
@@ -663,7 +693,7 @@ module com.contrivedexample.isbjs {
                         this._sql += theOperator;
                     }
                 }
-            }            
+            }
         }
     }
 }

@@ -37,6 +37,10 @@ isbBtn {
     border-radius:4px;
 }
 
+.errorOnInput {
+    background-color: red;
+}
+
 .resultdiv {
     min-height: 75px;
     margin: 8px;
