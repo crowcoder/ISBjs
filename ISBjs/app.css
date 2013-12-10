@@ -29,6 +29,17 @@ span {
     font-style: italic;
 }
 
-.ibsLi {
+.isbLi {
     list-style: none;
+}
+isbBtn {
+    border: 1px solid black;
+    border-radius:4px;
+}
+
+.resultdiv {
+    min-height: 75px;
+    margin: 8px;
+    padding:4px;
+    border: 2px solid black;
 }

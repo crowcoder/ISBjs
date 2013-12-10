@@ -1,15 +1,90 @@
 ﻿<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <title>ISB Tests</title>
+    <meta charset="utf-8" />
+    <title>Interactive Search Builder for javascript Test Runner</title>
     <link href="qunit-1.12.0.css" rel="stylesheet" />
+    <link href="../app.css" rel="stylesheet" />
 </head>
 <body>
+    <div>
+        <div id="content">
+
+        </div>
+        <ul id="srchUL"></ul>
+    </div>
+    <button id="parseBtn" onclick="parse();">Parse</button>
+    <div id="dynLinq"></div>
+    <div id="sql"></div>
+    <div id="linqExpr"></div>
+    <br />
 
     <div id="qunit"></div>
     <div id="qunit-fixture"></div>
+    
     <script src="../app.js"></script>
     <script src="qunit-1.12.0.js"></script>
     <script src="tests.js"></script>
+    <script>
+        var isb;
+        window.onload = function () {
+
+            var langmap = {
+                "equal": "Is equal to",
+                "notequal": "<>",
+                "startswith": "Starts with",
+                "endswith": "Ends with",
+                "istrue": "Is true",
+                "isfalse": "Is false",
+                "isnull": "Is Null",
+                "isnotnull": "Is not null",
+                "contains": "Contains",
+                "greater": ">",
+                "greatereq": ">=",
+                "less": "<",
+                "lesseq": "<=",
+                "isin": "Is in",
+                "isnotin": "Is not in",
+                "defsrch": "Define Search",
+                "reset": "Reset"
+            }
+
+            isb = new com.contrivedexample.isbjs.Isb({
+                "listClass": "ibsLi",
+                "listItemClass": "ibsLi",
+                "andOrLiClass": "ibsLi",
+                "propSelClass": "isbselect",
+                "operSelClass": "isbselect",
+                "andOrSelClass": "isbselect",
+                "propSelAttributes": [
+                    { "attr_Name": "MyAttr1", "attrValue": "aOne" },
+                    { "attr_Name": "MyAttr2", "attrValue": "aTwo" }
+                ],
+                "divName": "content",
+                "ulName": "srchUL",
+                "propSelOptAttributes": [
+                    { "attr_Name": "data-toggle", "attrValue": "foo" },
+                    { "attr_Name": "data-role", "attrValue": "superman" }
+                ],
+                "propSelOptClass": "marque spin"
+            });
+
+
+            isb.addFilterProperty({ "display": "Last Name", "value": "lastname", "dataType": "text" });
+            isb.addFilterProperty({ "display": "Age", "value": "age", "dataType": "number" });
+            isb.addFilterProperty({ "display": "Gender", "value": "gender", "dataType": "text" });
+            isb.addFilterProperty({ "display": "DOB", "value": "dob", "dataType": "date" })
+            isb.addFilterProperty({ "display": "Is Vested", "value": "vested", "dataType": "bool" })
+            //isb.render();
+        };
+
+        function parse() {
+            var linqresults = isb.parseForLinq();
+            var dynlnq = document.querySelector("#dynLinq");
+            dynlnq.innerHTML = '';
+            dynlnq.innerHTML = linqresults.join();
+        }
+
+    </script>
 </body>
 </html>

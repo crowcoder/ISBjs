@@ -55,6 +55,9 @@ module com.contrivedexample.isbjs {
         andOrOptClass: string;
         andOrOptAttributes: Array<IsbAttributes>;
 
+        //class on the plus and fork buttons
+        btnClass: string;
+
         //classes and attributes for the property select
         propSelClass: string;
         propSelAttributes: Array<IsbAttributes>;
@@ -163,9 +166,9 @@ module com.contrivedexample.isbjs {
             fltrConfig.defaultDataType === "bool" || fltrConfig.defaultDataType === "number") ?
             fltrConfig.defaultDataType : "text";
 
-            this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._NULL, this._NOTEQUALS, this._NOT_NULL];
-            this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
-            this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
+            this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._IN, this._NULL, this._NOTEQUALS, this._NOT_NULL];
+            this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN,this._NULL, this._NOT_NULL];
+            this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN,this._NULL, this._NOT_NULL];
             this._boolConditions = [this._TRUE, this._FALSE];
 
             switch (fltrConfig.defaultDataType) {
@@ -512,6 +515,10 @@ module com.contrivedexample.isbjs {
 
         buildPlusOrFork(pos: number, thearray: Array<any>, pOrf: string, offset: number, that): HTMLButtonElement {
             var btn = document.createElement("button");
+
+            if (typeof this._fltrConfig.btnClass === "string") {
+                btn.className = this._fltrConfig.btnClass;
+            }
             
             btn.appendChild(document.createTextNode(pOrf === "p" ? "+" : "( )"));
 
@@ -557,6 +564,8 @@ module com.contrivedexample.isbjs {
         //Parses the backing array to a string suitable for use in a Dynamic Linq where clause.
         private parseToLinq(arr) : void {
 
+            if (!arr) {throw "Backing array is undefined" };
+
             for (var i = 0; i < arr.length; i++) {
                 if (typeof arr[i] == "string") {
                     this._sql += " " + arr[i] + " ";
@@ -570,67 +579,80 @@ module com.contrivedexample.isbjs {
                         var theOperator;
                         switch (arr[i].oper) {
                             case this._EQUALS:
-                                theOperator = ".Equals(@" + this._params.length + ")";
+                                theOperator = " " + arr[i].prop + ".Equals(@" + this._params.length + ")";
+                                this._params.push(arr[i].cnst);
+                                break;
+                            case this._NOTEQUALS:
+                                theOperator = " Not " + arr[i].prop + ".Equals(@" + this._params.length + ")";
                                 this._params.push(arr[i].cnst);
                                 break;
                             case this._LESS:
                                 if (arr[i].dataType === "date") {
-                                    theOperator = " < Convert.ToDateTime(@" + this._params.length + ")";
+                                    theOperator = " " + arr[i].prop + " < Convert.ToDateTime(@" + this._params.length + ")";
                                     this._params.push(arr[i].cnst);
                                 } else {
-                                    theOperator = " < " + arr[i].cnst;
+                                    theOperator = " " + arr[i].prop + " " + arr[i].prop + " < " + arr[i].cnst;
                                 }
                                 break;
                             case this._LESS_EQ:
                                 if (arr[i].dataType === "date") {
-                                    theOperator = " <= Convert.ToDateTime(@" + this._params.length + ")";
+                                    theOperator = " " + arr[i].prop + " <= Convert.ToDateTime(@" + this._params.length + ")";
                                     this._params.push(arr[i].cnst);
                                 } else {
-                                    theOperator = " <= " + arr[i].cnst;
+                                    theOperator = " " + arr[i].prop + " <= " + arr[i].cnst;
                                 }
                                 break;
                             case this._GREATER:
                                 if (arr[i].dataType === "date") {
-                                    theOperator = " > Convert.ToDateTime(@" + this._params.length + ")";
+                                    theOperator = " " + arr[i].prop + " > Convert.ToDateTime(@" + this._params.length + ")";
                                     this._params.push(arr[i].cnst);
                                 } else {
-                                    theOperator = " > " + arr[i].cnst;
+                                    theOperator = " " + arr[i].prop +  " > " + arr[i].cnst;
                                 }
                                 break;
                             case this._GREATER_EQ:
                                 if (arr[i].dataType === "date") {
-                                    theOperator = " >= Convert.ToDateTime(@" + this._params.length + ")";
+                                    theOperator = " " + arr[i].prop + " >= Convert.ToDateTime(@" + this._params.length + ")";
                                     this._params.push(arr[i].cnst);
                                 } else {
-                                    theOperator = " >= " + arr[i].cnst;
+                                    theOperator = " " + arr[i].prop + " >= " + arr[i].cnst;
                                 }
                                 break;
                             case this._STARTS_WITH:
-                                theOperator = ".StartsWith(@" + this._params.length + ")";
+                                theOperator = " " + arr[i].prop + ".StartsWith(@" + this._params.length + ")";
                                 this._params.push(arr[i].cnst);
                                 break;
                             case this._ENDS_WITH:
-                                theOperator = ".EndsWith(@" + this._params.length + ")";
+                                theOperator = " " + arr[i].prop + ".EndsWith(@" + this._params.length + ")";
                                 this._params.push(arr[i].cnst);
                                 break;
                             case this._NULL:
-                                theOperator = " ** need to research **";
+                                theOperator = " " + arr[i].prop +  " = Null";
                                 break;
                             case this._NOT_NULL:
-                                theOperator = " ** need to research **";
+                                theOperator = " " + arr[i].prop + " Not = Null";
+                                break;
+                            case this._IN:
+                                var tokens = arr[i].cnst.split(",");
+                                theOperator = "(";
+                                for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                    theOperator += arr[i].prop + ".Equals(@" + this._params.length + ") Or ";
+                                    this._params.push(tokens[tokIdx]);
+                                }                                
+                                theOperator += ") ";
                                 break;
                             case this._CONTAINS:
-                                theOperator = ".Contains(@" + this._params.length + ")";
+                                theOperator = " " + arr[i].prop + ".Contains(@" + this._params.length + ")";
                                 this._params.push(arr[i].cnst);
                                 break;
                             case this._TRUE:
-                                theOperator = " = True ";
+                                theOperator = " " + arr[i].prop + " = True ";
                                 break;
                             case this._FALSE:
-                                theOperator = " = False ";
+                                theOperator = " " + arr[i].prop + " = False ";
                                 break;
                             default:
-                                theOperator = " default " + arr[i].cnst;;
+                                throw "Unknown operator " + (arr[i] || "~") + ". Cannot parse.";
 
                         }
 
@@ -638,7 +660,7 @@ module com.contrivedexample.isbjs {
                             this._sql = '';
                         }
 
-                        this._sql += " " + arr[i].prop + theOperator;
+                        this._sql += theOperator;
                     }
                 }
             }            

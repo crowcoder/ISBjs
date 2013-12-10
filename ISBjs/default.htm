@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Interactive Search Builder for javascript</title>
+    <title>Interactive Search Builder for javascript Test Runner</title>
     <link rel="stylesheet" href="app.css" type="text/css" />
-    <link href="tests/qunit-1.12.0.css" rel="stylesheet" />
-    
+   
 </head>
 <body>
     <div>
@@ -15,16 +14,16 @@
         <ul id="srchUL"></ul>
     </div>
     <button id="parseBtn" onclick="parse();">Parse</button>
-    <div id="dynLinq"></div>
-    <div id="sql"></div>
-    <div id="linqExpr"></div>
-    <br />
-    <div id="qunit"></div>
-    <div id="qunit-fixture"></div>
 
-    <script src="tests/qunit-1.12.0.js"></script>
+    <br />
+    <label for="dynLinq">Dynamic Linq:</label>
+    <div id="dynLinq" class="resultdiv"></div>
+    <label for="sql">SQL:</label>
+    <div id="sql" class="resultdiv"></div>
+    <label for="linqExpr">Postfix Expression:</label>
+    <div id="linqExpr" class="resultdiv"></div>
+
     <script src="app.js"></script>
-    <script src="tests/tests.js"></script>
     <script>
         var isb;
         window.onload = function () {
@@ -52,10 +51,11 @@
             isb = new com.contrivedexample.isbjs.Isb({
                 "listClass": "ibsLi",
                 "listItemClass": "ibsLi",
-                "andOrLiClass": "ibsLi",
+                "andOrLiClass": "isbLi",
                 "propSelClass": "isbselect",
                 "operSelClass": "isbselect",
                 "andOrSelClass": "isbselect",
+                "btnClass": "isbBtn",
                 "propSelAttributes": [
                     { "attr_Name": "MyAttr1", "attrValue": "aOne" },
                     { "attr_Name": "MyAttr2", "attrValue": "aTwo" }
