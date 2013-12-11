@@ -82,9 +82,16 @@
 
         function parse() {
             var linqresults = isb.parseForLinq();
+            var postfixresults = isb.parseToPostFix();
+
             var dynlnq = document.querySelector("#dynLinq");
             dynlnq.innerHTML = '';
             dynlnq.innerHTML = linqresults.join();
+            
+            var lnq = document.querySelector("#linqExpr");
+            lnq.innerHTML = '';
+            lnq.innerHTML = postfixresults.join();
+
         }
 
     </script>

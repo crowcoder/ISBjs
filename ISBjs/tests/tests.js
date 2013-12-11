@@ -15,3 +15,14 @@
 
     ok(typeof whr[0] === "string", 'Index zero of parsed output is a string.');
 });
+
+test("Testing postfix evaluation", function () {
+
+    //A * (B + C * D) + E becomes A B C D * + * E +
+    //{"L":"A"},{"L":"B"},{"L":"C"},{"L":"D"},AND,OR,AND,{"L":"E"},OR
+    isb._theExpression = [{ 'L': 'A' }, 'AND', [{ 'L': 'B' }, 'OR', { 'L': 'C' }, 'AND', { 'L': 'D' }], 'OR', { 'L': 'E' }];   
+    var postfx = isb.parseToPostFix().join();
+    deepEqual(postfx, '{"L":"A"},{"L":"B"},{"L":"C"},{"L":"D"},AND,OR,AND,{"L":"E"},OR',
+        "Contrived expression parses correctly to postfix.");
+
+});

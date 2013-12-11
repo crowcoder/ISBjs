@@ -571,7 +571,7 @@ module com.contrivedexample.isbjs {
                     parseerr = true;
                     if (typeof this._fltrConfig.valueInputErrClass === "string") {
                         this._theInputs[idx].className = this._theInputs[idx].className + " " + this._fltrConfig.valueInputErrClass;
-                    }                    
+                    }
                 }
             }
 
@@ -586,6 +586,64 @@ module com.contrivedexample.isbjs {
             else {
                 return ["Missing search values exist"];
             }
+        }
+
+        
+        parseToPostFix(): Array<string> {
+            var _operStack : Array<string> = [];
+            var _postfix : Array<string> = [];
+            var flattenedArray = '';
+            
+            (function parse(flatStr) {
+                flatStr = flatStr.substring(0, flatStr.length - 1); //strip trailing comma
+                var theArr: Array<string> = flatStr.split(",");
+
+                for (var i = 0; i < theArr.length; i++) {
+                    if (theArr[i] == "AND" || theArr[i] === "OR" || theArr[i] === "(") {
+                        if (_operStack.length === 0 || _operStack[0] === "(") {
+                            _operStack.unshift(theArr[i]);
+                        } else {
+                            if ((theArr[i] === "AND" || theArr[i] === "OR") && _operStack[0] === "OR") {
+                                _operStack.unshift(theArr[i]);
+                            } else {
+                                while (theArr[i] === "OR" && _operStack[0] === "AND") {
+                                    _postfix.push(_operStack.shift());
+                                }
+                                _operStack.unshift(theArr[i]);
+                            }
+                        }
+                    } else {
+                        if (theArr[i] === ")") {
+                            while (_operStack[0] !== "(") {
+                                _postfix.push(_operStack.shift());
+                            }
+                            _operStack.shift();
+                        } else {
+                            _postfix.push(theArr[i]);
+                        }
+                    }
+                }
+                for (var idx = 0; idx < _operStack.length; idx++) {
+                    _postfix.push(_operStack[idx]);
+                }
+            })((function flattenArray(theArr) {
+                    for (var i = 0; i < theArr.length; i++) {
+                        if (typeof theArr[i] == "string") {
+                            flattenedArray += theArr[i] + ",";
+                        } else {
+                            if (theArr[i] instanceof Array) {
+                                flattenedArray += "(,";
+                                flattenArray(theArr[i]);
+                                flattenedArray += "),";
+                            } else {
+                                flattenedArray += JSON.stringify(theArr[i]) + ",";
+                            }
+                        }
+                    }
+                    return flattenedArray;
+                })(this._theExpression));
+
+            return _postfix;
         }
 
         //Parses the backing array to a string suitable for use in a Dynamic Linq where clause.
