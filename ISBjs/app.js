@@ -432,8 +432,27 @@
                 Isb.prototype.parseForLinq = function () {
                     var parseerr = false;
                     for (var idx = 0; idx < this._theInputs.length; idx++) {
-                        if (this._theInputs[idx].value === '') {
-                            parseerr = true;
+                        var inputType = this._theInputs[idx].getAttribute("type");
+                        switch (inputType) {
+                            case "text":
+                                if (this._theInputs[idx].value === '') {
+                                    parseerr = true;
+                                }
+                                break;
+                            case "number":
+                                var nbr = parseFloat(this._theInputs[idx].value);
+                                if (isNaN(nbr) || !isFinite(nbr)) {
+                                    parseerr = true;
+                                }
+                                break;
+                            case "date":
+                                if (isNaN(Date.parse(this._theInputs[idx].value))) {
+                                    parseerr = true;
+                                }
+                                break;
+                            default:
+                        }
+                        if (parseerr) {
                             if (typeof this._fltrConfig.valueInputErrClass === "string") {
                                 this._theInputs[idx].className = this._theInputs[idx].className + " " + this._fltrConfig.valueInputErrClass;
                             }
@@ -541,6 +560,7 @@
                                 this.parseLinqToEntities(arr[i]);
                                 this._sql += ")";
                             } else {
+                                var cs = this._IGNORECASE ? ".ToLower()" : "";
                                 var theOperator;
                                 switch (arr[i].oper) {
                                     case this._EQUALS:
@@ -552,7 +572,7 @@
                                                 this._params.push(constVal);
                                                 break;
                                             default:
-                                                theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() = @" : " = @") + this._params.length;
+                                                theOperator = " " + arr[i].prop + cs + " = @" + this._params.length;
                                                 if (this._IGNORECASE) {
                                                     this._params.push(constVal.toLowerCase());
                                                 } else {
@@ -569,7 +589,7 @@
                                                 this._params.push(constVal);
                                                 break;
                                             default:
-                                                theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() != @" : " != @") + this._params.length;
+                                                theOperator = " " + arr[i].prop + cs + " != @" + this._params.length;
                                                 if (this._IGNORECASE) {
                                                     this._params.push(constVal.toLowerCase());
                                                 } else {
@@ -594,11 +614,11 @@
                                         this._params.push(constVal);
                                         break;
                                     case this._STARTS_WITH:
-                                        theOperator = " " + arr[i].prop + ".StartsWith(@" + this._params.length + ")";
+                                        theOperator = " " + arr[i].prop + cs + ".StartsWith(@" + this._params.length + ")";
                                         this._params.push(constVal);
                                         break;
                                     case this._ENDS_WITH:
-                                        theOperator = " " + arr[i].prop + ".EndsWith(@" + this._params.length + ")";
+                                        theOperator = " " + arr[i].prop + cs + ".EndsWith(@" + this._params.length + ")";
                                         this._params.push(constVal);
                                         break;
                                     case this._NULL:
@@ -611,7 +631,7 @@
                                         var tokens = arr[i].cnst.split(",");
                                         theOperator = "(";
                                         for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                                            theOperator += arr[i].prop + ".Equals(@" + this._params.length + ") ";
+                                            theOperator += arr[i].prop + cs + ".Equals(@" + this._params.length + ") ";
                                             if (tokIdx !== tokens.length - 1) {
                                                 theOperator += "OR ";
                                             }
@@ -620,7 +640,7 @@
                                         theOperator += ") ";
                                         break;
                                     case this._CONTAINS:
-                                        theOperator = " " + arr[i].prop + ".Contains(@" + this._params.length + ")";
+                                        theOperator = " " + arr[i].prop + cs + ".Contains(@" + this._params.length + ")";
                                         this._params.push(constVal);
                                         break;
                                     case this._TRUE:
@@ -641,6 +661,10 @@
                             }
                         }
                     }
+                };
+
+                Isb.prototype.parseSql = function () {
+                    //WHERE (N'foo' = (LOWER([Extent1].[Surname]))) OR (N'clinton' = (LOWER([Extent1].[Surname]))) OR (N'bar' = (LOWER([Extent1].[Surname])))
                 };
                 return Isb;
             })();

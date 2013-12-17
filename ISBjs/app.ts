@@ -441,7 +441,7 @@ module com.contrivedexample.isbjs {
 
                                 break;
                             case this._BOOL:
-                               // arr[i].cnst = void 0;
+                                // arr[i].cnst = void 0;
                                 break;
                         }
 
@@ -463,7 +463,7 @@ module com.contrivedexample.isbjs {
 
                                 switch (arr[idx].dataType) {
                                     case that._TEXT:
-                                    case that._NUMBER:                                    
+                                    case that._NUMBER:
                                     case that._DATE:
                                         arr[idx].oper = that._EQUALS;
                                         break;
@@ -585,8 +585,28 @@ module com.contrivedexample.isbjs {
         parseForLinq(): Array<any> {
             var parseerr = false;
             for (var idx = 0; idx < this._theInputs.length; idx++) {
-                if (this._theInputs[idx].value === '') {
-                    parseerr = true;
+                var inputType = this._theInputs[idx].getAttribute("type");
+                switch (inputType) {
+                    case "text":
+                        if (this._theInputs[idx].value === '') {
+                            parseerr = true;
+                        }
+                        break;
+                    case "number":
+                        var nbr = parseFloat(this._theInputs[idx].value);
+                        if (isNaN(nbr) || !isFinite(nbr)) {
+                            parseerr = true;
+                        }
+                        break;
+                    case "date":
+                        if (isNaN(Date.parse(this._theInputs[idx].value))) {
+                            parseerr = true;
+                        }
+                        break;
+                    default:
+
+                }
+                if (parseerr) {
                     if (typeof this._fltrConfig.valueInputErrClass === "string") {
                         this._theInputs[idx].className = this._theInputs[idx].className + " " + this._fltrConfig.valueInputErrClass;
                     }
@@ -607,12 +627,11 @@ module com.contrivedexample.isbjs {
             }
         }
 
-        
         parseToPostFix(): Array<string> {
-            var _operStack : Array<string> = [];
-            var _postfix : Array<string> = [];
+            var _operStack: Array<string> = [];
+            var _postfix: Array<string> = [];
             var flattenedArray = '';
-            
+
             (function parse(flatStr) {
                 flatStr = flatStr.substring(0, flatStr.length - 1); //strip trailing comma
                 var theArr: Array<string> = flatStr.split(",");
@@ -696,6 +715,7 @@ module com.contrivedexample.isbjs {
                         this.parseLinqToEntities(arr[i]);
                         this._sql += ")";
                     } else {
+                        var cs = this._IGNORECASE ? ".ToLower()" : ""; //store if query is case sensitive
                         var theOperator;
                         switch (arr[i].oper) {
                             case this._EQUALS:
@@ -707,13 +727,13 @@ module com.contrivedexample.isbjs {
                                         this._params.push(constVal);
                                         break;
                                     default:
-                                        theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() = @" : " = @") + this._params.length;
+                                        theOperator = " " + arr[i].prop + cs + " = @" + this._params.length;
                                         if (this._IGNORECASE) {
                                             this._params.push(constVal.toLowerCase());
                                         } else {
                                             this._params.push(constVal);
-                                        }                                        
-                                    }                                                                
+                                        }
+                                }
                                 break;
                             case this._NOTEQUALS:
                                 switch (arr[i].dataType) {
@@ -724,36 +744,36 @@ module com.contrivedexample.isbjs {
                                         this._params.push(constVal);
                                         break;
                                     default:
-                                        theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() != @" : " != @") + this._params.length;
+                                        theOperator = " " + arr[i].prop + cs + " != @" + this._params.length;
                                         if (this._IGNORECASE) {
                                             this._params.push(constVal.toLowerCase());
                                         } else {
                                             this._params.push(constVal);
                                         }
-                                    }   
+                                }
                                 break;
                             case this._LESS:
-                                    theOperator = " " + arr[i].prop + " < @" + this._params.length;
-                                    this._params.push(constVal);
+                                theOperator = " " + arr[i].prop + " < @" + this._params.length;
+                                this._params.push(constVal);
                                 break;
                             case this._LESS_EQ:
-                                    theOperator = " " + arr[i].prop + " <= @" + this._params.length;
-                                    this._params.push(constVal);
+                                theOperator = " " + arr[i].prop + " <= @" + this._params.length;
+                                this._params.push(constVal);
                                 break;
                             case this._GREATER:
-                                    theOperator = " " + arr[i].prop + " > @" + this._params.length;
-                                    this._params.push(constVal);
+                                theOperator = " " + arr[i].prop + " > @" + this._params.length;
+                                this._params.push(constVal);
                                 break;
                             case this._GREATER_EQ:
-                                    theOperator = " " + arr[i].prop + " >= @" + this._params.length;
-                                    this._params.push(constVal);
+                                theOperator = " " + arr[i].prop + " >= @" + this._params.length;
+                                this._params.push(constVal);
                                 break;
                             case this._STARTS_WITH:
-                                theOperator = " " + arr[i].prop + ".StartsWith(@" + this._params.length + ")";
+                                theOperator = " " + arr[i].prop + cs + ".StartsWith(@" + this._params.length + ")";
                                 this._params.push(constVal);
                                 break;
                             case this._ENDS_WITH:
-                                theOperator = " " + arr[i].prop + ".EndsWith(@" + this._params.length + ")";
+                                theOperator = " " + arr[i].prop + cs + ".EndsWith(@" + this._params.length + ")";
                                 this._params.push(constVal);
                                 break;
                             case this._NULL:
@@ -762,11 +782,11 @@ module com.contrivedexample.isbjs {
                             case this._NOT_NULL:
                                 theOperator = " " + arr[i].prop + " Not = Null";
                                 break;
-                            case this._IN:
+                            case this._IN:                                
                                 var tokens = arr[i].cnst.split(",");
                                 theOperator = "(";
                                 for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                                    theOperator += arr[i].prop + ".Equals(@" + this._params.length + ") ";
+                                    theOperator += arr[i].prop + cs + ".Equals(@" + this._params.length + ") ";
                                     if (tokIdx !== tokens.length - 1) {
                                         theOperator += "OR ";
                                     }
@@ -775,7 +795,7 @@ module com.contrivedexample.isbjs {
                                 theOperator += ") ";
                                 break;
                             case this._CONTAINS:
-                                theOperator = " " + arr[i].prop + ".Contains(@" + this._params.length + ")";
+                                theOperator = " " + arr[i].prop + cs + ".Contains(@" + this._params.length + ")";
                                 this._params.push(constVal);
                                 break;
                             case this._TRUE:
@@ -797,6 +817,10 @@ module com.contrivedexample.isbjs {
                     }
                 }
             }
+        }
+
+        parseSql(): void {
+            //WHERE (N'foo' = (LOWER([Extent1].[Surname]))) OR (N'clinton' = (LOWER([Extent1].[Surname]))) OR (N'bar' = (LOWER([Extent1].[Surname])))
         }
     }
 }
