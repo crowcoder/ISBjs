@@ -39,6 +39,8 @@
                     this._RESET = usingLang ? fltrConfig.langmap.reset : "Reset";
                     this._DEFTYPE = fltrConfig.defaultDataType && (fltrConfig.defaultDataType === "text" || fltrConfig.defaultDataType === "date" || fltrConfig.defaultDataType === "bool" || fltrConfig.defaultDataType === "number") ? fltrConfig.defaultDataType : "text";
 
+                    this._IGNORECASE = fltrConfig.ignoreCase === true ? true : false;
+
                     this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._IN, this._NULL, this._NOTEQUALS, this._NOT_NULL];
                     this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
                     this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
@@ -308,6 +310,17 @@
                                             }
                                         }
 
+                                        switch (arr[idx].dataType) {
+                                            case that._TEXT:
+                                            case that._NUMBER:
+                                            case that._DATE:
+                                                arr[idx].oper = that._EQUALS;
+                                                break;
+                                            case that._BOOL:
+                                                arr[idx].oper = that._TRUE;
+                                                break;
+                                        }
+
                                         //re-render the widget so that the appropriate operators are shown for this choice
                                         that.render();
                                     };
@@ -428,9 +441,9 @@
                     }
 
                     if (!parseerr) {
-                        this.parseToLinq(this._theExpression);
+                        this.parseLinqToEntities(this._theExpression);
                         var sqlstring = this._sql;
-                        var paramstring = this._params.join(",");
+                        var paramstring = JSON.stringify(this._params);
                         this._sql = "";
                         this._params = [];
                         return [sqlstring, paramstring];
@@ -497,70 +510,69 @@
                 };
 
                 //Parses the backing array to a string suitable for use in a Dynamic Linq where clause.
-                Isb.prototype.parseToLinq = function (arr) {
+                Isb.prototype.parseLinqToEntities = function (arr) {
                     if (!arr) {
                         throw "Backing array is undefined";
                     }
                     ;
 
                     for (var i = 0; i < arr.length; i++) {
+                        var constVal;
+                        switch (arr[i].dataType) {
+                            case 'date':
+                                var dt = new Date(arr[i].cnst);
+                                dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); //chop off timezone offset
+                                constVal = dt;
+                                break;
+                            case 'number':
+                                constVal = parseFloat(arr[i].cnst);
+                                break;
+                            default:
+                                constVal = arr[i].cnst;
+                                break;
+                        }
+
                         if (typeof arr[i] == "string") {
                             this._sql += " " + arr[i] + " ";
                         } else {
                             if (arr[i] instanceof Array) {
                                 this._sql += "(";
-                                this.parseToLinq(arr[i]);
+                                this.parseLinqToEntities(arr[i]);
                                 this._sql += ")";
                             } else {
                                 var theOperator;
                                 switch (arr[i].oper) {
                                     case this._EQUALS:
-                                        theOperator = " " + arr[i].prop + ".Equals(@" + this._params.length + ")";
-                                        this._params.push(arr[i].cnst);
+                                        theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() = @" : " = @") + this._params.length;
+                                        this._params.push(constVal.toLowerCase());
                                         break;
                                     case this._NOTEQUALS:
-                                        theOperator = " Not " + arr[i].prop + ".Equals(@" + this._params.length + ")";
-                                        this._params.push(arr[i].cnst);
+                                        theOperator = " Not " + arr[i].prop + " = @" + this._params.length;
+                                        this._params.push(constVal);
                                         break;
                                     case this._LESS:
-                                        if (arr[i].dataType === "date") {
-                                            theOperator = " " + arr[i].prop + " < Convert.ToDateTime(@" + this._params.length + ")";
-                                            this._params.push(arr[i].cnst);
-                                        } else {
-                                            theOperator = " " + arr[i].prop + " " + arr[i].prop + " < " + arr[i].cnst;
-                                        }
+                                        theOperator = " " + arr[i].prop + " < @" + this._params.length;
+                                        this._params.push(constVal);
                                         break;
                                     case this._LESS_EQ:
-                                        if (arr[i].dataType === "date") {
-                                            theOperator = " " + arr[i].prop + " <= Convert.ToDateTime(@" + this._params.length + ")";
-                                            this._params.push(arr[i].cnst);
-                                        } else {
-                                            theOperator = " " + arr[i].prop + " <= " + arr[i].cnst;
-                                        }
+                                        theOperator = " " + arr[i].prop + " <= @" + this._params.length;
+                                        this._params.push(constVal);
                                         break;
                                     case this._GREATER:
-                                        if (arr[i].dataType === "date") {
-                                            theOperator = " " + arr[i].prop + " > Convert.ToDateTime(@" + this._params.length + ")";
-                                            this._params.push(arr[i].cnst);
-                                        } else {
-                                            theOperator = " " + arr[i].prop + " > " + arr[i].cnst;
-                                        }
+                                        theOperator = " " + arr[i].prop + " > @" + this._params.length;
+                                        this._params.push(constVal);
                                         break;
                                     case this._GREATER_EQ:
-                                        if (arr[i].dataType === "date") {
-                                            theOperator = " " + arr[i].prop + " >= Convert.ToDateTime(@" + this._params.length + ")";
-                                            this._params.push(arr[i].cnst);
-                                        } else {
-                                            theOperator = " " + arr[i].prop + " >= " + arr[i].cnst;
-                                        }
+                                        theOperator = " " + arr[i].prop + " >= @" + this._params.length;
+                                        this._params.push(constVal);
                                         break;
                                     case this._STARTS_WITH:
                                         theOperator = " " + arr[i].prop + ".StartsWith(@" + this._params.length + ")";
-                                        this._params.push(arr[i].cnst);
+                                        this._params.push(constVal);
                                         break;
                                     case this._ENDS_WITH:
                                         theOperator = " " + arr[i].prop + ".EndsWith(@" + this._params.length + ")";
-                                        this._params.push(arr[i].cnst);
+                                        this._params.push(constVal);
                                         break;
                                     case this._NULL:
                                         theOperator = " " + arr[i].prop + " = Null";
@@ -576,13 +588,13 @@
                                             if (tokIdx !== tokens.length - 1) {
                                                 theOperator += "OR ";
                                             }
-                                            this._params.push(tokens[tokIdx]);
+                                            this._params.push(tokens[tokIdx].trim());
                                         }
                                         theOperator += ") ";
                                         break;
                                     case this._CONTAINS:
                                         theOperator = " " + arr[i].prop + ".Contains(@" + this._params.length + ")";
-                                        this._params.push(arr[i].cnst);
+                                        this._params.push(constVal);
                                         break;
                                     case this._TRUE:
                                         theOperator = " " + arr[i].prop + " = True ";

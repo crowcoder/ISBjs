@@ -16,12 +16,14 @@
     <button id="parseBtn" onclick="parse();">Parse</button>
 
     <br />
-    <label for="dynLinq">Dynamic Linq:</label>
-    <div id="dynLinq" class="resultdiv"></div>
-    <label for="sql">SQL:</label>
-    <div id="sql" class="resultdiv"></div>
-    <label for="linqExpr">Postfix Expression:</label>
-    <div id="linqExpr" class="resultdiv"></div>
+    <label for="dynLinq">Dynamic Linq:</label><br />
+    <textarea id="dynLinq" class="resultdiv"></textarea><br />
+    <label for="sql">SQL:</label><br />
+    <textarea id="sql" class="resultdiv"></textarea><br />
+    <label for="linqExpr">Postfix Expression:</label><br />
+    <textarea id="linqExpr" class="resultdiv"></textarea><br />
+    <label for="odata">OData:</label><br />
+    <textarea id="odata" class="resultdiv"></textarea>
 
     <script src="app.js"></script>
     <script>
@@ -68,15 +70,16 @@
                     { "attr_Name": "data-toggle", "attrValue": "foo" },
                     { "attr_Name": "data-role", "attrValue": "superman" }
                 ],
-                "propSelOptClass": "marque spin"
+                "propSelOptClass": "marque spin",
+                "ignoreCase" : true
             });
 
 
-            isb.addFilterProperty({ "display": "Last Name", "value": "lastname", "dataType": "text" });
-            isb.addFilterProperty({ "display": "Age", "value": "age", "dataType": "number" });
-            isb.addFilterProperty({ "display": "Gender", "value": "gender", "dataType": "text" });
-            isb.addFilterProperty({ "display": "DOB", "value": "dob", "dataType": "date" })
-            isb.addFilterProperty({ "display": "Is Vested", "value": "vested", "dataType": "bool" })            
+            isb.addFilterProperty({ "display": "Surname", "value": "Surname", "dataType": "text" });
+            isb.addFilterProperty({ "display": "Bill Rate", "value": "BillRate", "dataType": "number" });
+            isb.addFilterProperty({ "display": "City", "value": "Town", "dataType": "text" });
+            isb.addFilterProperty({ "display": "Date of hire", "value": "DOH", "dataType": "date" })
+            isb.addFilterProperty({ "display": "Is Crew", "value": "IsCrew", "dataType": "bool" })            
             //isb.render();
         };
 
@@ -85,12 +88,10 @@
             var postfixresults = isb.parseToPostFix();
 
             var dynlnq = document.querySelector("#dynLinq");
-            dynlnq.innerHTML = '';
-            dynlnq.innerHTML = linqresults.join();
+            dynlnq.value = linqresults.join();
             
             var lnq = document.querySelector("#linqExpr");
-            lnq.innerHTML = '';
-            lnq.innerHTML = postfixresults.join();
+            lnq.value = postfixresults.join();
 
         }
 

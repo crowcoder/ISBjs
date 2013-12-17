@@ -43,6 +43,7 @@ isbBtn {
 
 .resultdiv {
     min-height: 75px;
+    width:85%;
     margin: 8px;
     padding:4px;
     border: 2px solid black;
