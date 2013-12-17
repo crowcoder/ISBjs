@@ -26,3 +26,31 @@ test("Testing postfix evaluation", function () {
         "Contrived expression parses correctly to postfix.");
 
 });
+
+test("Test Linq to Entities for Not Equals for all data types with ignore case", function () {
+    isb._IGNORECASE = true;
+    isb._theExpression =
+        [{ "prop": "Surname", "oper": "Is not equal to", "cnst": "bob", "dataType": "text" }, "AND", { "prop": "BillRate", "oper": "Is not equal to", "cnst": "10", "dataType": "number" }, "AND", { "prop": "DOH", "oper": "Is not equal to", "cnst": "7/1/2008", "dataType": "date" }];
+
+    var expected1 = " Surname.ToLower() != @0 AND  BillRate != @1 AND  DOH != @2";
+    var expected2 = "[\"bob\",10,\"2008-07-01T00:00:00.000Z\"]";
+
+    var actual = isb.parseForLinq();
+
+    deepEqual(actual[0], expected1);
+    deepEqual(actual[1], expected2);
+});
+
+test("Test Linq to Entities for Not Equals for all data types and case sensitive", function () {
+    isb._IGNORECASE = false;
+    isb._theExpression =
+        [{ "prop": "Surname", "oper": "Is not equal to", "cnst": "bob", "dataType": "text" }, "AND", { "prop": "BillRate", "oper": "Is not equal to", "cnst": "10", "dataType": "number" }, "AND", { "prop": "DOH", "oper": "Is not equal to", "cnst": "7/1/2008", "dataType": "date" }];
+
+    var expected1 = " Surname != @0 AND  BillRate != @1 AND  DOH != @2";
+    var expected2 = "[\"bob\",10,\"2008-07-01T00:00:00.000Z\"]";
+
+    var actual = isb.parseForLinq();
+
+    deepEqual(actual[0], expected1);
+    deepEqual(actual[1], expected2);
+});

@@ -175,9 +175,9 @@ module com.contrivedexample.isbjs {
 
             this._IGNORECASE = fltrConfig.ignoreCase === true ? true : false;
 
-            this._textConditions = [this._EQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._IN, this._NULL, this._NOTEQUALS, this._NOT_NULL];
-            this._dateConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
-            this._nbrConditions = [this._EQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
+            this._textConditions = [this._EQUALS, this._NOTEQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._IN, this._NULL, this._NOTEQUALS, this._NOT_NULL, this._LESS, this._GREATER];
+            this._dateConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
+            this._nbrConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
             this._boolConditions = [this._TRUE, this._FALSE];
 
             switch (fltrConfig.defaultDataType) {
@@ -594,6 +594,7 @@ module com.contrivedexample.isbjs {
             }
 
             if (!parseerr) {
+                console.log(JSON.stringify(this._theExpression));
                 this.parseLinqToEntities(this._theExpression);
                 var sqlstring = this._sql;
                 var paramstring = JSON.stringify(this._params);
@@ -698,12 +699,38 @@ module com.contrivedexample.isbjs {
                         var theOperator;
                         switch (arr[i].oper) {
                             case this._EQUALS:
-                                theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() = @" : " = @") + this._params.length;
-                                this._params.push(constVal.toLowerCase());
+                                switch (arr[i].dataType) {
+                                    case "date":
+                                    case "bool":
+                                    case "number":
+                                        theOperator = " " + arr[i].prop + " @" + this._params.length;
+                                        this._params.push(constVal);
+                                        break;
+                                    default:
+                                        theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() = @" : " = @") + this._params.length;
+                                        if (this._IGNORECASE) {
+                                            this._params.push(constVal.toLowerCase());
+                                        } else {
+                                            this._params.push(constVal);
+                                        }                                        
+                                    }                                                                
                                 break;
                             case this._NOTEQUALS:
-                                theOperator = " Not " + arr[i].prop + " = @" + this._params.length;
-                                this._params.push(constVal);
+                                switch (arr[i].dataType) {
+                                    case "date":
+                                    case "bool":
+                                    case "number":
+                                        theOperator = " " + arr[i].prop + " != @" + this._params.length;
+                                        this._params.push(constVal);
+                                        break;
+                                    default:
+                                        theOperator = " " + arr[i].prop + (this._IGNORECASE ? ".ToLower() != @" : " != @") + this._params.length;
+                                        if (this._IGNORECASE) {
+                                            this._params.push(constVal.toLowerCase());
+                                        } else {
+                                            this._params.push(constVal);
+                                        }
+                                    }   
                                 break;
                             case this._LESS:
                                     theOperator = " " + arr[i].prop + " < @" + this._params.length;
