@@ -614,27 +614,169 @@ module com.contrivedexample.isbjs {
             }
 
             if (!parseerr) {
-                console.log(JSON.stringify(this._theExpression));
-                this.parseLinqToEntities(this._theExpression);
-                var sqlstring = this._sql;
-                var paramstring = JSON.stringify(this._params);
-                this._sql = "";
-                this._params = [];
-                return [sqlstring, paramstring];
+                //console.log(JSON.stringify(this._theExpression));
+                //this.parseLinqToEntities(this._theExpression);
+                var sqlstring: string = ""; // = this._sql;
+                //var paramstring = JSON.stringify(this._params);
+                //this._sql = "(";
+                
+                var pstfix = this.parseToPostFix(); //.join("|");
+
+                for (var fixIdx = 0; fixIdx < pstfix.length; fixIdx++) {
+                    
+                    if (pstfix[fixIdx] === "AND" || pstfix[fixIdx] === "OR") { 
+
+                        if (sqlstring.length === 0) {
+                            var expr1 = this.getDynLinq2EntitiesExpr(pstfix[fixIdx - 2]);
+                            var op = pstfix[fixIdx];
+                            var expr2 = this.getDynLinq2EntitiesExpr(pstfix[fixIdx - 1]);
+
+                            sqlstring = sqlstring + ("(" + expr1 + " " + op + " " + expr2 + ")");
+                            pstfix.splice(fixIdx - 2, 3);
+                            fixIdx = 0;
+                        } else {
+                            var chainExpr = this.getDynLinq2EntitiesExpr(pstfix[fixIdx - 1]);
+                            sqlstring = "(" + chainExpr + " " + pstfix[fixIdx] + " " + sqlstring + ")";
+                            pstfix.splice(fixIdx - 1, 2);
+                            fixIdx = 0;
+                        }
+                    }
+                }
+
+                sqlstring += ")";
+
+                //this._params = [];
+                console.log(sqlstring);
+                return [sqlstring, this._params];
             }
             else {
                 return ["Missing search values exist"];
             }
         }
 
+        //Parses the object 'expr' and returns the expression in dynamic linq to entities format
+        getDynLinq2EntitiesExpr(expr): string {
+            var fltr = JSON.parse(expr);
+            var theOperator: string;
+            var cs = this._IGNORECASE ? ".ToLower()" : ""; //store if query is case sensitive
+            var constVal;
+
+            switch (fltr.dataType) {
+                case 'date':
+                    var dt = new Date(fltr.cnst);
+                    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); //chop off timezone offset and daylight saving time
+                    constVal = dt;
+                    break;
+                case 'number':
+                    constVal = parseFloat(fltr.cnst);
+                    break;
+                default:
+                    constVal = fltr.cnst;
+                    break;
+            }
+
+            switch (fltr.oper) {
+                case this._EQUALS:
+                    switch (fltr.dataType) {
+                        case "date":
+                        case "bool":
+                        case "number":
+                            theOperator = " " + fltr.prop + " = @" + this._params.length;
+                            this._params.push(constVal);
+                            break;
+                        default:
+                            theOperator = " " + fltr.prop + cs + " = @" + this._params.length;
+                            if (this._IGNORECASE) {
+                                this._params.push(constVal.toLowerCase());
+                            } else {
+                                this._params.push(constVal);
+                            }
+                    }
+                    break;
+                case this._NOTEQUALS:
+                    switch (fltr.dataType) {
+                        case "date":
+                        case "bool":
+                        case "number":
+                            theOperator = " " + fltr.prop + " != @" + this._params.length;
+                            this._params.push(constVal);
+                            break;
+                        default:
+                            theOperator = " " + fltr.prop + cs + " != @" + this._params.length;
+                            if (this._IGNORECASE) {
+                                this._params.push(constVal.toLowerCase());
+                            } else {
+                                this._params.push(constVal);
+                            }
+                    }
+                    break;
+                case this._LESS:
+                    theOperator = " " + fltr.prop + " < @" + this._params.length;
+                    this._params.push(constVal);
+                    break;
+                case this._LESS_EQ:
+                    theOperator = " " + fltr.prop + " <= @" + this._params.length;
+                    this._params.push(constVal);
+                    break;
+                case this._GREATER:
+                    theOperator = " " + fltr.prop + " > @" + this._params.length;
+                    this._params.push(constVal);
+                    break;
+                case this._GREATER_EQ:
+                    theOperator = " " + fltr.prop + " >= @" + this._params.length;
+                    this._params.push(constVal);
+                    break;
+                case this._STARTS_WITH:
+                    theOperator = " " + fltr.prop + cs + ".StartsWith(@" + this._params.length + ")";
+                    this._params.push(constVal);
+                    break;
+                case this._ENDS_WITH:
+                    theOperator = " " + fltr.prop + cs + ".EndsWith(@" + this._params.length + ")";
+                    this._params.push(constVal);
+                    break;
+                case this._NULL:
+                    theOperator = " " + fltr.prop + " = Null";
+                    break;
+                case this._NOT_NULL:
+                    theOperator = " " + fltr.prop + " Not = Null";
+                    break;
+                case this._IN:
+                    var tokens = fltr.cnst.split(",");
+                    theOperator = "(";
+                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                        theOperator += fltr.prop + cs + ".Equals(@" + this._params.length + ") ";
+                        if (tokIdx !== tokens.length - 1) {
+                            theOperator += "OR ";
+                        }
+                        this._params.push(tokens[tokIdx].trim());
+                    }
+                    theOperator += ") ";
+                    break;
+                case this._CONTAINS:
+                    theOperator = " " + fltr.prop + cs + ".Contains(@" + this._params.length + ")";
+                    this._params.push(constVal);
+                    break;
+                case this._TRUE:
+                    theOperator = " " + fltr.prop + " = True ";
+                    break;
+                case this._FALSE:
+                    theOperator = " " + fltr.prop + " = False ";
+                    break;
+                default:
+                    throw "Unknown operator " + (fltr || "~") + ". Cannot parse.";
+            }
+            return theOperator;
+        }
+
         parseToPostFix(): Array<string> {
             var _operStack: Array<string> = [];
             var _postfix: Array<string> = [];
             var flattenedArray = '';
+            var delim = "|";
 
             (function parse(flatStr) {
                 flatStr = flatStr.substring(0, flatStr.length - 1); //strip trailing comma
-                var theArr: Array<string> = flatStr.split(",");
+                var theArr: Array<any> = flatStr.split(delim);
 
                 for (var i = 0; i < theArr.length; i++) {
                     if (theArr[i] == "AND" || theArr[i] === "OR" || theArr[i] === "(") {
@@ -667,18 +809,18 @@ module com.contrivedexample.isbjs {
             })((function flattenArray(theArr) {
                     for (var i = 0; i < theArr.length; i++) {
                         if (typeof theArr[i] == "string") {
-                            flattenedArray += theArr[i] + ",";
+                            flattenedArray += theArr[i] + delim;
                         } else {
                             if (theArr[i] instanceof Array) {
-                                flattenedArray += "(,";
+                                flattenedArray += "(" + delim;
                                 flattenArray(theArr[i]);
-                                flattenedArray += "),";
+                                flattenedArray += ")" + delim;
                             } else {
-                                flattenedArray += JSON.stringify(theArr[i]) + ",";
+                                flattenedArray += JSON.stringify(theArr[i]) + delim;
                             }
                         }
                     }
-                    return flattenedArray;
+                return flattenedArray;
                 })(this._theExpression));
 
             return _postfix;
@@ -706,14 +848,17 @@ module com.contrivedexample.isbjs {
                         break;
                 }
 
-                if (typeof arr[i] == "string") {
+                if (typeof arr[i] == "string") {                    
+                    if (arr[i + 1] instanceof Array) {
+                        this._sql += ")";
+                    }
                     this._sql += " " + arr[i] + " ";
                 }
                 else {
                     if (arr[i] instanceof Array) {
                         this._sql += "(";
                         this.parseLinqToEntities(arr[i]);
-                        this._sql += ")";
+                        this._sql += ")(";
                     } else {
                         var cs = this._IGNORECASE ? ".ToLower()" : ""; //store if query is case sensitive
                         var theOperator;
