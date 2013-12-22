@@ -127,6 +127,17 @@ module com.contrivedexample.isbjs {
         private _IGNORECASE: boolean;
 
         private _theExpression: Array<any>;
+        
+        // = [
+        //    { "prop": "Surname", "oper": "Is equal to", "cnst": "no", "dataType": "text" }
+        //    , "OR"
+        //    , { "prop": "BillRate", "oper": "Is greater than", "cnst": "10", "dataType": "number" }
+        //    , "AND"
+        //    , [{ "prop": "Town", "oper": "Contains", "cnst": "po", "dataType": "text" }
+        //        , "OR"
+        //        , { "prop": "IsCrew", "oper": "Is true", "cnst": "", "dataType": "bool" }
+        //    ]
+        //];
 
         private _textConditions: Array<string>;
         private _dateConditions: Array<string>;
@@ -584,6 +595,9 @@ module com.contrivedexample.isbjs {
         //parameters required to execute the where clause.
         parseForLinq(): Array<any> {
             var parseerr = false;
+            this._params = []; //reset the parameters
+
+            //Check for data errors. Make sure numbers are numbers, dates are dates, etc.
             for (var idx = 0; idx < this._theInputs.length; idx++) {
                 var inputType = this._theInputs[idx].getAttribute("type");
                 switch (inputType) {
@@ -613,41 +627,40 @@ module com.contrivedexample.isbjs {
                 }
             }
 
+            //No data error found, lets do this...
             if (!parseerr) {
-                //console.log(JSON.stringify(this._theExpression));
-                //this.parseLinqToEntities(this._theExpression);
-                var sqlstring: string = ""; // = this._sql;
-                //var paramstring = JSON.stringify(this._params);
-                //this._sql = "(";
+               // console.log(JSON.stringify(this._theExpression));
+                var sqlstring: string = ""; 
                 
-                var pstfix = this.parseToPostFix(); //.join("|");
+                var pstfix = this.parseToPostFix();
 
-                for (var fixIdx = 0; fixIdx < pstfix.length; fixIdx++) {
-                    
-                    if (pstfix[fixIdx] === "AND" || pstfix[fixIdx] === "OR") { 
-
-                        if (sqlstring.length === 0) {
-                            var expr1 = this.getDynLinq2EntitiesExpr(pstfix[fixIdx - 2]);
-                            var op = pstfix[fixIdx];
-                            var expr2 = this.getDynLinq2EntitiesExpr(pstfix[fixIdx - 1]);
-
-                            sqlstring = sqlstring + ("(" + expr1 + " " + op + " " + expr2 + ")");
-                            pstfix.splice(fixIdx - 2, 3);
-                            fixIdx = 0;
-                        } else {
-                            var chainExpr = this.getDynLinq2EntitiesExpr(pstfix[fixIdx - 1]);
-                            sqlstring = "(" + chainExpr + " " + pstfix[fixIdx] + " " + sqlstring + ")";
-                            pstfix.splice(fixIdx - 1, 2);
-                            fixIdx = 0;
-                        }
+                //convert all expression objects to L2E expression
+                for (var i = 0; i < pstfix.length; i++) {
+                    if (pstfix[i].indexOf("{") === 0) { //first character is open brace then it must be an expression object
+                        pstfix.splice(i, 1, this.getDynLinq2EntitiesExpr(pstfix[i]));
                     }
                 }
 
-                sqlstring += ")";
+                toInfix.call(this, pstfix);
 
-                //this._params = [];
-                console.log(sqlstring);
-                return [sqlstring, this._params];
+                function toInfix(theArr) {
+                    for (var fixIdx = 0; fixIdx < theArr.length; fixIdx++) {
+
+                        if (theArr[fixIdx] === "AND" || theArr[fixIdx] === "OR") {
+                            //remove 3 items starting at index minus 2, replace them with one item that is the
+                            //combination of those 3 items into one expression
+                            theArr.splice(
+                                fixIdx - 2,
+                                3,//  left operand               operator               right operand
+                                "(" + theArr[fixIdx - 2] + " " + theArr[fixIdx] + " " + theArr[fixIdx - 1] + ")"
+                             );
+
+                            toInfix.call(this, theArr);
+                        }                        
+                    }
+                }
+                //console.log(pstfix[0]);
+                return [pstfix[0], this._params];
             }
             else {
                 return ["Missing search values exist"];
@@ -820,148 +833,10 @@ module com.contrivedexample.isbjs {
                             }
                         }
                     }
-                return flattenedArray;
+                    return flattenedArray;
                 })(this._theExpression));
 
             return _postfix;
-        }
-
-        //Parses the backing array to a string suitable for use in a Dynamic Linq where clause.
-        private parseLinqToEntities(arr): void {
-
-            if (!arr) {throw "Backing array is undefined" };
-
-            //set the value with the correct data type as well as correct value
-            for (var i = 0; i < arr.length; i++) {
-                var constVal;
-                switch (arr[i].dataType) {
-                    case 'date':
-                        var dt = new Date(arr[i].cnst);
-                        dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); //chop off timezone offset
-                        constVal = dt;
-                        break;
-                    case 'number':
-                        constVal = parseFloat(arr[i].cnst);
-                        break;
-                    default:
-                        constVal = arr[i].cnst;
-                        break;
-                }
-
-                if (typeof arr[i] == "string") {                    
-                    if (arr[i + 1] instanceof Array) {
-                        this._sql += ")";
-                    }
-                    this._sql += " " + arr[i] + " ";
-                }
-                else {
-                    if (arr[i] instanceof Array) {
-                        this._sql += "(";
-                        this.parseLinqToEntities(arr[i]);
-                        this._sql += ")(";
-                    } else {
-                        var cs = this._IGNORECASE ? ".ToLower()" : ""; //store if query is case sensitive
-                        var theOperator;
-                        switch (arr[i].oper) {
-                            case this._EQUALS:
-                                switch (arr[i].dataType) {
-                                    case "date":
-                                    case "bool":
-                                    case "number":
-                                        theOperator = " " + arr[i].prop + " @" + this._params.length;
-                                        this._params.push(constVal);
-                                        break;
-                                    default:
-                                        theOperator = " " + arr[i].prop + cs + " = @" + this._params.length;
-                                        if (this._IGNORECASE) {
-                                            this._params.push(constVal.toLowerCase());
-                                        } else {
-                                            this._params.push(constVal);
-                                        }
-                                }
-                                break;
-                            case this._NOTEQUALS:
-                                switch (arr[i].dataType) {
-                                    case "date":
-                                    case "bool":
-                                    case "number":
-                                        theOperator = " " + arr[i].prop + " != @" + this._params.length;
-                                        this._params.push(constVal);
-                                        break;
-                                    default:
-                                        theOperator = " " + arr[i].prop + cs + " != @" + this._params.length;
-                                        if (this._IGNORECASE) {
-                                            this._params.push(constVal.toLowerCase());
-                                        } else {
-                                            this._params.push(constVal);
-                                        }
-                                }
-                                break;
-                            case this._LESS:
-                                theOperator = " " + arr[i].prop + " < @" + this._params.length;
-                                this._params.push(constVal);
-                                break;
-                            case this._LESS_EQ:
-                                theOperator = " " + arr[i].prop + " <= @" + this._params.length;
-                                this._params.push(constVal);
-                                break;
-                            case this._GREATER:
-                                theOperator = " " + arr[i].prop + " > @" + this._params.length;
-                                this._params.push(constVal);
-                                break;
-                            case this._GREATER_EQ:
-                                theOperator = " " + arr[i].prop + " >= @" + this._params.length;
-                                this._params.push(constVal);
-                                break;
-                            case this._STARTS_WITH:
-                                theOperator = " " + arr[i].prop + cs + ".StartsWith(@" + this._params.length + ")";
-                                this._params.push(constVal);
-                                break;
-                            case this._ENDS_WITH:
-                                theOperator = " " + arr[i].prop + cs + ".EndsWith(@" + this._params.length + ")";
-                                this._params.push(constVal);
-                                break;
-                            case this._NULL:
-                                theOperator = " " + arr[i].prop + " = Null";
-                                break;
-                            case this._NOT_NULL:
-                                theOperator = " " + arr[i].prop + " Not = Null";
-                                break;
-                            case this._IN:                                
-                                var tokens = arr[i].cnst.split(",");
-                                theOperator = "(";
-                                for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                                    theOperator += arr[i].prop + cs + ".Equals(@" + this._params.length + ") ";
-                                    if (tokIdx !== tokens.length - 1) {
-                                        theOperator += "OR ";
-                                    }
-                                    this._params.push(tokens[tokIdx].trim());
-                                }
-                                theOperator += ") ";
-                                break;
-                            case this._CONTAINS:
-                                theOperator = " " + arr[i].prop + cs + ".Contains(@" + this._params.length + ")";
-                                this._params.push(constVal);
-                                break;
-                            case this._TRUE:
-                                theOperator = " " + arr[i].prop + " = True ";
-                                break;
-                            case this._FALSE:
-                                theOperator = " " + arr[i].prop + " = False ";
-                                break;
-                            default:
-                                throw "Unknown operator " + (arr[i] || "~") + ". Cannot parse.";
-
-                        }
-
-                        if (this._sql == void 0) {
-                            this._sql = '';
-                        }
-
-                        this._sql += theOperator;
-                    }
-                }
-            }
         }
 
         parseSql(): void {
