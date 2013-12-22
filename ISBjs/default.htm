@@ -71,7 +71,7 @@
                     { "attr_Name": "data-role", "attrValue": "superman" }
                 ],
                 "propSelOptClass": "marque spin",
-                "ignoreCase" : false
+                "ignoreCase" : true
             });
 
             isb.addFilterProperty({ "display": "Surname", "value": "Surname", "dataType": "text" });
@@ -84,15 +84,22 @@
         };
 
         function parse() {
-            var linqresults = isb.parseForLinq();
+            var linqresults = isb.parse("l2e");
+            var sqlresults = isb.parse("sql");
+            var odataresults = isb.parse("odata");
             var postfixresults = isb.parseToPostFix();
 
             var dynlnq = document.querySelector("#dynLinq");
             dynlnq.value = linqresults.join();
             
-            var lnq = document.querySelector("#linqExpr");
-            lnq.value = postfixresults.join();
+            var sql = document.querySelector("#sql");
+            sql.value = sqlresults;
 
+            var pstfx = document.querySelector("#linqExpr");
+            pstfx.value = postfixresults;
+
+            var odata = document.querySelector("#odata");
+            odata.value = odataresults;
         }
 
     </script>

@@ -127,7 +127,7 @@ module com.contrivedexample.isbjs {
         private _IGNORECASE: boolean;
 
         private _theExpression: Array<any>;
-        
+
         // = [
         //    { "prop": "Surname", "oper": "Is equal to", "cnst": "no", "dataType": "text" }
         //    , "OR"
@@ -593,7 +593,7 @@ module com.contrivedexample.isbjs {
         //Parses the search builder to an array of two strings.
         //The first string is the "where" clause and the second is the list of
         //parameters required to execute the where clause.
-        parseForLinq(): Array<any> {
+        parse(whichtype): Array<any> {
             var parseerr = false;
             this._params = []; //reset the parameters
 
@@ -618,7 +618,6 @@ module com.contrivedexample.isbjs {
                         }
                         break;
                     default:
-
                 }
                 if (parseerr) {
                     if (typeof this._fltrConfig.valueInputErrClass === "string") {
@@ -629,15 +628,15 @@ module com.contrivedexample.isbjs {
 
             //No data error found, lets do this...
             if (!parseerr) {
-               // console.log(JSON.stringify(this._theExpression));
-                var sqlstring: string = ""; 
-                
+                // console.log(JSON.stringify(this._theExpression));
+                var sqlstring: string = "";
+
                 var pstfix = this.parseToPostFix();
 
                 //convert all expression objects to L2E expression
                 for (var i = 0; i < pstfix.length; i++) {
                     if (pstfix[i].indexOf("{") === 0) { //first character is open brace then it must be an expression object
-                        pstfix.splice(i, 1, this.getDynLinq2EntitiesExpr(pstfix[i]));
+                        pstfix.splice(i, 1, this.getExpr(pstfix[i], whichtype));
                     }
                 }
 
@@ -645,18 +644,23 @@ module com.contrivedexample.isbjs {
 
                 function toInfix(theArr) {
                     for (var fixIdx = 0; fixIdx < theArr.length; fixIdx++) {
+                        var andor = theArr[fixIdx];
+                        if (andor === "AND" || andor === "OR") {
 
-                        if (theArr[fixIdx] === "AND" || theArr[fixIdx] === "OR") {
+                            if (whichtype === "odata") {
+                                andor = andor.toLowerCase();
+                            }
+
                             //remove 3 items starting at index minus 2, replace them with one item that is the
                             //combination of those 3 items into one expression
                             theArr.splice(
                                 fixIdx - 2,
                                 3,//  left operand               operator               right operand
-                                "(" + theArr[fixIdx - 2] + " " + theArr[fixIdx] + " " + theArr[fixIdx - 1] + ")"
-                             );
+                                "(" + theArr[fixIdx - 2] + " " + andor + " " + theArr[fixIdx - 1] + ")"
+                                );
 
                             toInfix.call(this, theArr);
-                        }                        
+                        }
                     }
                 }
                 //console.log(pstfix[0]);
@@ -668,17 +672,19 @@ module com.contrivedexample.isbjs {
         }
 
         //Parses the object 'expr' and returns the expression in dynamic linq to entities format
-        getDynLinq2EntitiesExpr(expr): string {
+        getExpr(expr, parsetype: string): string {
             var fltr = JSON.parse(expr);
             var theOperator: string;
             var cs = this._IGNORECASE ? ".ToLower()" : ""; //store if query is case sensitive
             var constVal;
+            var fmtDate;
 
             switch (fltr.dataType) {
                 case 'date':
                     var dt = new Date(fltr.cnst);
                     dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); //chop off timezone offset and daylight saving time
                     constVal = dt;
+                    fmtDate = dt.getFullYear() + "-" + (dt.getMonth() + 1) + "-" + dt.getDate();
                     break;
                 case 'number':
                     constVal = parseFloat(fltr.cnst);
@@ -692,60 +698,396 @@ module com.contrivedexample.isbjs {
                 case this._EQUALS:
                     switch (fltr.dataType) {
                         case "date":
-                        case "bool":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " = @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " = '" + fmtDate + "'";
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " eq '" + fmtDate + "'";
+                                    break;
+                            }
+                            break;
                         case "number":
-                            theOperator = " " + fltr.prop + " = @" + this._params.length;
-                            this._params.push(constVal);
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " = @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " = " + constVal;
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " eq " + constVal;
+                                    break;
+                            }
                             break;
                         default:
-                            theOperator = " " + fltr.prop + cs + " = @" + this._params.length;
-                            if (this._IGNORECASE) {
-                                this._params.push(constVal.toLowerCase());
-                            } else {
-                                this._params.push(constVal);
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + cs + " = @" + this._params.length;
+                                    if (this._IGNORECASE) {
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        this._params.push(constVal);
+                                    }
+                                    break;
+                                case "sql":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") = '" + constVal + "'";
+                                    } else {
+                                        theOperator = " " + fltr.prop + " = '" + constVal + "'";
+                                    }
+                                    break;
+                                case "odata":
+                                    if (this._IGNORECASE) {
+                                        theOperator = "tolower(" + fltr.prop + ") eq '" + constVal + "'";
+                                    } else {
+                                        theOperator = fltr.prop + " eq '" + constVal + "'";
+                                    }
+                                    break;
                             }
                     }
                     break;
                 case this._NOTEQUALS:
                     switch (fltr.dataType) {
                         case "date":
-                        case "bool":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " != @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " <> '" + fmtDate + "'";
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " ne '" + fmtDate + "'";
+                                    break;
+                            }
+                            break;
                         case "number":
-                            theOperator = " " + fltr.prop + " != @" + this._params.length;
-                            this._params.push(constVal);
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " != @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " <> " + constVal;
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " ne " + constVal;
+                                    break;
+                            }
                             break;
                         default:
-                            theOperator = " " + fltr.prop + cs + " != @" + this._params.length;
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + cs + " != @" + this._params.length;
+                                    if (this._IGNORECASE) {
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        this._params.push(constVal);
+                                    }
+                                    break;
+                                case "sql":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") <> '" + constVal + "'";
+                                    } else {
+                                        theOperator = " " + fltr.prop + " <> '" + constVal + "'";
+                                    }
+                                    break;
+                                case "odata":
+                                    if (this._IGNORECASE) {
+                                        theOperator = "tolower(" + fltr.prop + ") ne '" + constVal + "'";
+                                    } else {
+                                        theOperator = fltr.prop + " ne '" + constVal + "'";
+                                    }
+                                    break;
+                            }
+                    }
+                    break;
+                case this._LESS:
+                    switch (fltr.dataType) {
+                        case "date":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " < @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " < '" + fmtDate + "'";
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " lt '" + fmtDate + "'";
+                                    break;
+                            }
+                            break;
+                        case "number":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " < @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " < " + constVal;
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " lt " + constVal;
+                                    break;
+                            }
+                            break;
+                        default:
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + cs + " < @" + this._params.length;
+                                    if (this._IGNORECASE) {
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        this._params.push(constVal);
+                                    }
+                                    break;
+                                case "sql":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") < '" + constVal + "'";
+                                    } else {
+                                        theOperator = " " + fltr.prop + " < '" + constVal + "'";
+                                    }
+                                    break;
+                                case "odata":
+                                    if (this._IGNORECASE) {
+                                        theOperator = "tolower(" + fltr.prop + ") lt '" + constVal + "'";
+                                    } else {
+                                        theOperator = fltr.prop + " lt '" + constVal + "'";
+                                    }
+                                    break;
+                            }
+                    }
+                    break;
+                case this._LESS_EQ:
+                    switch (fltr.dataType) {
+                        case "date":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " <= @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " <= '" + fmtDate + "'";
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " le '" + fmtDate + "'";
+                                    break;
+                            }
+                            break;
+                        case "number":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " <= @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " <= " + constVal;
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " le " + constVal;
+                                    break;
+                            }
+                            break;
+                        default:
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + cs + " <= @" + this._params.length;
+                                    if (this._IGNORECASE) {
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        this._params.push(constVal);
+                                    }
+                                    break;
+                                case "sql":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") <= '" + constVal + "'";
+                                    } else {
+                                        theOperator = " " + fltr.prop + " <= '" + constVal + "'";
+                                    }
+                                    break;
+                                case "odata":
+                                    if (this._IGNORECASE) {
+                                        theOperator = "tolower(" + fltr.prop + ") le '" + constVal + "'";
+                                    } else {
+                                        theOperator = fltr.prop + " le '" + constVal + "'";
+                                    }
+                                    break;
+                            }
+                    }
+                    break;
+                case this._GREATER:
+                    switch (fltr.dataType) {
+                        case "date":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " > @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " > '" + fmtDate + "'";
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " gt '" + fmtDate + "'";
+                                    break;
+                            }
+                            break;
+                        case "number":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " > @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " > " + constVal;
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " gt " + constVal;
+                                    break;
+                            }
+                            break;
+                        default:
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + cs + " > @" + this._params.length;
+                                    if (this._IGNORECASE) {
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        this._params.push(constVal);
+                                    }
+                                    break;
+                                case "sql":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") > '" + constVal + "'";
+                                    } else {
+                                        theOperator = " " + fltr.prop + " > '" + constVal + "'";
+                                    }
+                                    break;
+                                case "odata":
+                                    if (this._IGNORECASE) {
+                                        theOperator = "tolower(" + fltr.prop + ") gt '" + constVal + "'";
+                                    } else {
+                                        theOperator = fltr.prop + " gt '" + constVal + "'";
+                                    }
+                                    break;
+                            }
+                    }
+                    break;
+                case this._GREATER_EQ:
+                    switch (fltr.dataType) {
+                        case "date":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " >= @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " >= '" + fmtDate + "'";
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " ge '" + fmtDate + "'";
+                                    break;
+                            }
+                            break;
+                        case "number":
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + " >= @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
+                                case "sql":
+                                    theOperator = " " + fltr.prop + " >= " + constVal;
+                                    break;
+                                case "odata":
+                                    theOperator = fltr.prop + " ge " + constVal;
+                                    break;
+                            }
+                            break;
+                        default:
+                            switch (parsetype) {
+                                case "l2e":
+                                    theOperator = " " + fltr.prop + cs + " >= @" + this._params.length;
+                                    if (this._IGNORECASE) {
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        this._params.push(constVal);
+                                    }
+                                    break;
+                                case "sql":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") >= '" + constVal + "'";
+                                    } else {
+                                        theOperator = " " + fltr.prop + " >= '" + constVal + "'";
+                                    }
+                                    break;
+                                case "odata":
+                                    if (this._IGNORECASE) {
+                                        theOperator = "tolower(" + fltr.prop + ") ge '" + constVal + "'";
+                                    } else {
+                                        theOperator = fltr.prop + " ge '" + constVal + "'";
+                                    }
+                                    break;
+                            }
+                    }
+                    break;
+                case this._STARTS_WITH:                    
+                    switch (parsetype) {
+                        case "l2e":
+                            theOperator = " " + fltr.prop + cs + ".StartsWith(@" + this._params.length + ")";
                             if (this._IGNORECASE) {
                                 this._params.push(constVal.toLowerCase());
                             } else {
                                 this._params.push(constVal);
                             }
+                            break;
+                        case "sql":
+                            if (this._IGNORECASE) {
+                                theOperator = " " + fltr.prop + " LIKE '" + constVal.toLowerCase() + "%'";
+                            } else {
+                                theOperator = " " + fltr.prop + " LIKE '" + constVal + "%'";
+                            }
+                            break;
+                        case "odata":
+                            if (this._IGNORECASE) {
+                                theOperator = " startswith(tolower(" + fltr.prop + "),'" + constVal + "')";
+                            } else {
+                                theOperator = " startswith(" + fltr.prop + ",'" + constVal + "')";
+                            }
+                            break;
                     }
                     break;
-                case this._LESS:
-                    theOperator = " " + fltr.prop + " < @" + this._params.length;
-                    this._params.push(constVal);
-                    break;
-                case this._LESS_EQ:
-                    theOperator = " " + fltr.prop + " <= @" + this._params.length;
-                    this._params.push(constVal);
-                    break;
-                case this._GREATER:
-                    theOperator = " " + fltr.prop + " > @" + this._params.length;
-                    this._params.push(constVal);
-                    break;
-                case this._GREATER_EQ:
-                    theOperator = " " + fltr.prop + " >= @" + this._params.length;
-                    this._params.push(constVal);
-                    break;
-                case this._STARTS_WITH:
-                    theOperator = " " + fltr.prop + cs + ".StartsWith(@" + this._params.length + ")";
-                    this._params.push(constVal);
-                    break;
                 case this._ENDS_WITH:
-                    theOperator = " " + fltr.prop + cs + ".EndsWith(@" + this._params.length + ")";
-                    this._params.push(constVal);
+                    switch (parsetype) {
+                        case "l2e":
+                            theOperator = " " + fltr.prop + cs + ".EndsWith(@" + this._params.length + ")";
+                            if (this._IGNORECASE) {
+                                this._params.push(constVal.toLowerCase());
+                            } else {
+                                this._params.push(constVal);
+                            }
+                            break;
+                        case "sql":
+                            if (this._IGNORECASE) {
+                                theOperator = " " + fltr.prop + " LIKE '%" + constVal.toLowerCase() + "'";
+                            } else {
+                                theOperator = " " + fltr.prop + " LIKE '%" + constVal + "'";
+                            }
+                            break;
+                        case "odata":
+                            if (this._IGNORECASE) {
+                                theOperator = " endswith(tolower(" + fltr.prop + "),'" + constVal + "')";
+                            } else {
+                                theOperator = " endswith(" + fltr.prop + ",'" + constVal + "')";
+                            }
+                            break;
+                    }
                     break;
                 case this._NULL:
                     theOperator = " " + fltr.prop + " = Null";
@@ -770,10 +1112,30 @@ module com.contrivedexample.isbjs {
                     this._params.push(constVal);
                     break;
                 case this._TRUE:
-                    theOperator = " " + fltr.prop + " = True ";
+                    switch (parsetype) {
+                        case "l2e":
+                            theOperator = " " + fltr.prop + " = True ";
+                            break;
+                        case "sql":
+                            theOperator = " " + fltr.prop + " = 1";
+                            break;
+                        case "odata":
+                            theOperator = fltr.prop + " eq true";
+                            break;
+                    }
                     break;
                 case this._FALSE:
-                    theOperator = " " + fltr.prop + " = False ";
+                    switch (parsetype) {
+                        case "l2e":
+                            theOperator = " " + fltr.prop + " = False ";
+                            break;
+                        case "sql":
+                            theOperator = " " + fltr.prop + " = 0";
+                            break;
+                        case "odata":
+                            theOperator = fltr.prop + " eq false";
+                            break;
+                    }
                     break;
                 default:
                     throw "Unknown operator " + (fltr || "~") + ". Cannot parse.";
