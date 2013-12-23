@@ -187,8 +187,8 @@ module com.contrivedexample.isbjs {
             this._IGNORECASE = fltrConfig.ignoreCase === true ? true : false;
 
             this._textConditions = [this._EQUALS, this._NOTEQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._IN, this._NULL, this._NOTEQUALS, this._NOT_NULL, this._LESS, this._GREATER];
-            this._dateConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
-            this._nbrConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, , this._IN, this._NULL, this._NOT_NULL];
+            this._dateConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
+            this._nbrConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._IN, this._NULL, this._NOT_NULL];
             this._boolConditions = [this._TRUE, this._FALSE];
 
             switch (fltrConfig.defaultDataType) {
@@ -699,6 +699,7 @@ module com.contrivedexample.isbjs {
                     switch (fltr.dataType) {
                         case "date":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " = @" + this._params.length;
                                     this._params.push(constVal);
@@ -713,6 +714,7 @@ module com.contrivedexample.isbjs {
                             break;
                         case "number":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " = @" + this._params.length;
                                     this._params.push(constVal);
@@ -727,6 +729,15 @@ module com.contrivedexample.isbjs {
                             break;
                         default:
                             switch (parsetype) {
+                                case "ado":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") = @" + this._params.length;
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        theOperator = " " + fltr.prop + " = @" + this._params.length;
+                                        this._params.push(constVal);
+                                    }
+                                    break;
                                 case "l2e":
                                     theOperator = " " + fltr.prop + cs + " = @" + this._params.length;
                                     if (this._IGNORECASE) {
@@ -756,6 +767,10 @@ module com.contrivedexample.isbjs {
                     switch (fltr.dataType) {
                         case "date":
                             switch (parsetype) {
+                                case "ado":
+                                    theOperator = " " + fltr.prop + " <> @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " != @" + this._params.length;
                                     this._params.push(constVal);
@@ -770,6 +785,10 @@ module com.contrivedexample.isbjs {
                             break;
                         case "number":
                             switch (parsetype) {
+                                case "ado":
+                                    theOperator = " " + fltr.prop + " <> @" + this._params.length;
+                                    this._params.push(constVal);
+                                    break;
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " != @" + this._params.length;
                                     this._params.push(constVal);
@@ -784,6 +803,15 @@ module com.contrivedexample.isbjs {
                             break;
                         default:
                             switch (parsetype) {
+                                case "ado":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") <> @" + this._params.length;
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        theOperator = " " + fltr.prop + " <> @" + this._params.length;
+                                        this._params.push(constVal);
+                                    }
+                                    break;
                                 case "l2e":
                                     theOperator = " " + fltr.prop + cs + " != @" + this._params.length;
                                     if (this._IGNORECASE) {
@@ -813,6 +841,7 @@ module com.contrivedexample.isbjs {
                     switch (fltr.dataType) {
                         case "date":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " < @" + this._params.length;
                                     this._params.push(constVal);
@@ -827,6 +856,7 @@ module com.contrivedexample.isbjs {
                             break;
                         case "number":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " < @" + this._params.length;
                                     this._params.push(constVal);
@@ -868,6 +898,7 @@ module com.contrivedexample.isbjs {
                     break;
                 case this._LESS_EQ:
                     switch (fltr.dataType) {
+                        case "ado":
                         case "date":
                             switch (parsetype) {
                                 case "l2e":
@@ -884,6 +915,7 @@ module com.contrivedexample.isbjs {
                             break;
                         case "number":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " <= @" + this._params.length;
                                     this._params.push(constVal);
@@ -898,6 +930,15 @@ module com.contrivedexample.isbjs {
                             break;
                         default:
                             switch (parsetype) {
+                                case "ado":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") <= @" + this._params.length;
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        theOperator = " " + fltr.prop + " <= @" + this._params.length;
+                                        this._params.push(constVal);
+                                    }
+                                    break;
                                 case "l2e":
                                     theOperator = " " + fltr.prop + cs + " <= @" + this._params.length;
                                     if (this._IGNORECASE) {
@@ -927,6 +968,7 @@ module com.contrivedexample.isbjs {
                     switch (fltr.dataType) {
                         case "date":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " > @" + this._params.length;
                                     this._params.push(constVal);
@@ -941,6 +983,7 @@ module com.contrivedexample.isbjs {
                             break;
                         case "number":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " > @" + this._params.length;
                                     this._params.push(constVal);
@@ -955,6 +998,15 @@ module com.contrivedexample.isbjs {
                             break;
                         default:
                             switch (parsetype) {
+                                case "ado":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") > @" + this._params.length;
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        theOperator = " " + fltr.prop + " > @" + this._params.length;
+                                        this._params.push(constVal);
+                                    }
+                                    break;
                                 case "l2e":
                                     theOperator = " " + fltr.prop + cs + " > @" + this._params.length;
                                     if (this._IGNORECASE) {
@@ -984,6 +1036,7 @@ module com.contrivedexample.isbjs {
                     switch (fltr.dataType) {
                         case "date":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " >= @" + this._params.length;
                                     this._params.push(constVal);
@@ -998,6 +1051,7 @@ module com.contrivedexample.isbjs {
                             break;
                         case "number":
                             switch (parsetype) {
+                                case "ado":
                                 case "l2e":
                                     theOperator = " " + fltr.prop + " >= @" + this._params.length;
                                     this._params.push(constVal);
@@ -1012,6 +1066,15 @@ module com.contrivedexample.isbjs {
                             break;
                         default:
                             switch (parsetype) {
+                                case "ado":
+                                    if (this._IGNORECASE) {
+                                        theOperator = " LOWER(" + fltr.prop + ") >= @" + this._params.length;
+                                        this._params.push(constVal.toLowerCase());
+                                    } else {
+                                        theOperator = " " + fltr.prop + " >= @" + this._params.length;
+                                        this._params.push(constVal);
+                                    }
+                                    break;
                                 case "l2e":
                                     theOperator = " " + fltr.prop + cs + " >= @" + this._params.length;
                                     if (this._IGNORECASE) {
@@ -1037,8 +1100,17 @@ module com.contrivedexample.isbjs {
                             }
                     }
                     break;
-                case this._STARTS_WITH:                    
+                case this._STARTS_WITH:
                     switch (parsetype) {
+                        case "ado":
+                            if (this._IGNORECASE) {
+                                theOperator = " LOWER(" + fltr.prop + ") LIKE @" + this._params.length;
+                                this._params.push(constVal.toLowerCase() + "%");
+                            } else {
+                                theOperator = " " + fltr.prop + " LIKE @" + this._params.length;
+                                this._params.push(constVal + "%");
+                            }
+                            break;
                         case "l2e":
                             theOperator = " " + fltr.prop + cs + ".StartsWith(@" + this._params.length + ")";
                             if (this._IGNORECASE) {
@@ -1065,6 +1137,15 @@ module com.contrivedexample.isbjs {
                     break;
                 case this._ENDS_WITH:
                     switch (parsetype) {
+                        case "ado":
+                            if (this._IGNORECASE) {
+                                theOperator = " LOWER(" + fltr.prop + ") LIKE @" + this._params.length;
+                                this._params.push("%" + constVal.toLowerCase());
+                            } else {
+                                theOperator = " " + fltr.prop + " LIKE @" + this._params.length;
+                                this._params.push("%" + constVal);
+                            }
+                            break;
                         case "l2e":
                             theOperator = " " + fltr.prop + cs + ".EndsWith(@" + this._params.length + ")";
                             if (this._IGNORECASE) {
@@ -1090,26 +1171,158 @@ module com.contrivedexample.isbjs {
                     }
                     break;
                 case this._NULL:
-                    theOperator = " " + fltr.prop + " = Null";
+                    switch (parsetype) {
+                        case "ado":
+                        case "sql":
+                            theOperator = " " + fltr.prop + " IS NULL";
+                            break;
+                        case "odata":
+                            theOperator = " " + fltr.prop + " eq null";
+                            break;
+                        default:
+                            theOperator = " " + fltr.prop + " = Null";
+                            break;
+                    }
                     break;
                 case this._NOT_NULL:
-                    theOperator = " " + fltr.prop + " Not = Null";
+                    switch (parsetype) {
+                        case "ado":
+                        case "sql":
+                            theOperator = " " + fltr.prop + " IS NOT NULL";
+                            break;
+                        case "odata":
+                            theOperator = " " + fltr.prop + " ne null";
+                            break;
+                        default:
+                            theOperator = " " + fltr.prop + " != Null";
+                            break;
+                    }
                     break;
                 case this._IN:
+
                     var tokens = fltr.cnst.split(",");
                     theOperator = "(";
-                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                        theOperator += fltr.prop + cs + ".Equals(@" + this._params.length + ") ";
-                        if (tokIdx !== tokens.length - 1) {
-                            theOperator += "OR ";
-                        }
-                        this._params.push(tokens[tokIdx].trim());
+
+                    switch (fltr.dataType) {
+                        case "text":
+                            switch (parsetype) {
+                                case "l2e":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + ".Equals(@" + this._params.length + ") ";
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                        this._params.push(tokens[tokIdx].trim());
+                                    }
+                                    break;
+                                case "ado":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + " = @" + this._params.length;
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                        this._params.push(tokens[tokIdx].trim());
+                                    }
+                                    break;
+                                case "sql":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + " = '" + tokens[tokIdx].trim() + "'";
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                    }
+                                    break;
+                                case "odata":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + " eq '" + tokens[tokIdx].trim() + "'";
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        case "number":
+                            switch (parsetype) {
+                                case "l2e":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + ".Equals(@" + this._params.length + ") ";
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                        this._params.push(tokens[tokIdx].trim());
+                                    }
+                                    break;
+                                case "ado":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + " = @" + this._params.length;
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                        this._params.push(tokens[tokIdx].trim());
+                                    }
+                                    break;
+                                case "sql":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + " = " + tokens[tokIdx].trim();
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                    }
+                                    break;
+                                case "odata":
+                                    for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
+                                        theOperator += fltr.prop + " eq " + tokens[tokIdx].trim();
+                                        if (tokIdx !== tokens.length - 1) {
+                                            theOperator += " OR ";
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
                     }
+
                     theOperator += ") ";
+
                     break;
                 case this._CONTAINS:
-                    theOperator = " " + fltr.prop + cs + ".Contains(@" + this._params.length + ")";
-                    this._params.push(constVal);
+                    
+                    switch (parsetype) {
+                        case "l2e":
+                            theOperator = " " + fltr.prop + cs + ".Contains(@" + this._params.length + ")";
+                            this._params.push(constVal);
+                            break;
+                        case "ado":
+                            if (this._IGNORECASE) {
+                                theOperator = " LOWER(" + fltr.prop + ") LIKE @" + this._params.length;
+                                this._params.push("%" + constVal.toLowerCase() + "%");
+                            }else{
+                                theOperator = " " + fltr.prop + " LIKE @" + this._params.length;
+                                this._params.push("%" + constVal + "%");
+                            }
+                            break;
+                        case "sql":
+                            if (this._IGNORECASE) {
+                                theOperator = " LOWER(" + fltr.prop + ") LIKE '%" + constVal.toLowerCase() + "%'";
+                            } else {
+                                theOperator = " " + fltr.prop + " LIKE '%" + constVal + "%'";
+                            }                            
+                            break;
+                        case "odata":
+                            if (this._IGNORECASE) {
+                                theOperator = " substringof('" + constVal.toLowerCase() + "', tolower(" + fltr.prop + "))";
+                            } else {
+                                theOperator = " substringof('" + constVal + "', " + fltr.prop + ")";
+                            }                            
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 case this._TRUE:
                     switch (parsetype) {

@@ -18,6 +18,8 @@
     <br />
     <label for="dynLinq">Dynamic Linq:</label><br />
     <textarea id="dynLinq" class="resultdiv"></textarea><br />
+    <label for="ado">ADO.Net</label><br />
+    <textarea id="ado" class="resultdiv"></textarea><br/>
     <label for="sql">SQL:</label><br />
     <textarea id="sql" class="resultdiv"></textarea><br />
     <label for="linqExpr">Postfix Expression:</label><br />
@@ -85,6 +87,7 @@
 
         function parse() {
             var linqresults = isb.parse("l2e");
+            var adoresults = isb.parse("ado");
             var sqlresults = isb.parse("sql");
             var odataresults = isb.parse("odata");
             var postfixresults = isb.parseToPostFix();
@@ -92,6 +95,9 @@
             var dynlnq = document.querySelector("#dynLinq");
             dynlnq.value = linqresults.join();
             
+            var ado = document.querySelector("#ado");
+            ado.value = adoresults;
+
             var sql = document.querySelector("#sql");
             sql.value = sqlresults;
 
