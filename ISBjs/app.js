@@ -1057,11 +1057,10 @@
                                     switch (parsetype) {
                                         case "l2e":
                                             for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                                                theOperator += fltr.prop + ".Equals(@" + this._params.length + ") ";
+                                                theOperator += fltr.prop + " = " + tokens[tokIdx].trim();
                                                 if (tokIdx !== tokens.length - 1) {
                                                     theOperator += " OR ";
                                                 }
-                                                this._params.push(tokens[tokIdx].trim());
                                             }
                                             break;
                                         case "ado":
