@@ -596,6 +596,7 @@ module com.contrivedexample.isbjs {
         parse(whichtype): Array<any> {
             var parseerr = false;
             this._params = []; //reset the parameters
+            pstfix = [];
 
             //Check for data errors. Make sure numbers are numbers, dates are dates, etc.
             for (var idx = 0; idx < this._theInputs.length; idx++) {
@@ -639,31 +640,7 @@ module com.contrivedexample.isbjs {
                         pstfix.splice(i, 1, this.getExpr(pstfix[i], whichtype));
                     }
                 }
-
-                toInfix.call(this, pstfix);
-
-                function toInfix(theArr) {
-                    for (var fixIdx = 0; fixIdx < theArr.length; fixIdx++) {
-                        var andor = theArr[fixIdx];
-                        if (andor === "AND" || andor === "OR") {
-
-                            if (whichtype === "odata") {
-                                andor = andor.toLowerCase();
-                            }
-
-                            //remove 3 items starting at index minus 2, replace them with one item that is the
-                            //combination of those 3 items into one expression
-                            theArr.splice(
-                                fixIdx - 2,
-                                3,//  left operand               operator               right operand
-                                "(" + theArr[fixIdx - 2] + " " + andor + " " + theArr[fixIdx - 1] + ")"
-                                );
-
-                            toInfix.call(this, theArr);
-                        }
-                    }
-                }
-                //console.log(pstfix[0]);
+                this.postToInfix(pstfix, whichtype, this);
                 return [pstfix[0], this._params];
             }
             else {
@@ -1357,6 +1334,11 @@ module com.contrivedexample.isbjs {
         }
 
         parseToPostFix(): Array<string> {
+
+            if (this._theExpression == void 0) {
+                return [];
+            }
+
             var _operStack: Array<string> = [];
             var _postfix: Array<string> = [];
             var flattenedArray = '';
@@ -1414,8 +1396,28 @@ module com.contrivedexample.isbjs {
             return _postfix;
         }
 
-        parseSql(): void {
-            //WHERE (N'foo' = (LOWER([Extent1].[Surname]))) OR (N'clinton' = (LOWER([Extent1].[Surname]))) OR (N'bar' = (LOWER([Extent1].[Surname])))
+        postToInfix(theArr, whichtype, that) {
+            
+            for (var fixIdx = 0; fixIdx < theArr.length; fixIdx++) {
+                var andor = theArr[fixIdx];
+                if (andor === "AND" || andor === "OR") {
+
+                    if (whichtype === "odata") {
+                        andor = andor.toLowerCase();
+                    }
+
+                    //remove 3 items starting at index minus 2, replace them with one item that is the
+                    //combination of those 3 items into one expression
+                    theArr.splice(
+                        fixIdx - 2,
+                        3,//  left operand               operator               right operand
+                        "(" + theArr[fixIdx - 2] + " " + andor + " " + theArr[fixIdx - 1] + ")"
+                        );
+
+                    that.postToInfix(theArr, whichtype, that);
+                }
+            }
         }
+
     }
 }
