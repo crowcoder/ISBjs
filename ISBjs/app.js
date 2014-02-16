@@ -48,7 +48,7 @@
                     this._textConditions = [this._EQUALS, this._NOTEQUALS, this._CONTAINS, this._STARTS_WITH, this._ENDS_WITH, this._IN, this._NULL, this._NOTEQUALS, this._NOT_NULL, this._LESS, this._GREATER];
                     this._dateConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._NULL, this._NOT_NULL];
                     this._nbrConditions = [this._EQUALS, this._NOTEQUALS, this._GREATER, this._GREATER_EQ, this._LESS, this._LESS_EQ, this._IN, this._NULL, this._NOT_NULL];
-                    this._boolConditions = [this._TRUE, this._FALSE];
+                    this._boolConditions = [this._TRUE, this._FALSE, this._NULL, this._NOT_NULL];
 
                     switch (fltrConfig.defaultDataType) {
                         case "text":
@@ -564,11 +564,10 @@
                                             }
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + cs + " = ";
                                             if (this._IGNORECASE) {
-                                                theOperator += constVal.toLowerCase();
+                                                theOperator = " " + fltr.prop + cs + " = \"" + constVal.toLowerCase() + "\"";
                                             } else {
-                                                theOperator += constVal;
+                                                theOperator = " " + fltr.prop + cs + " = \"" + constVal + "\"";
                                             }
                                             break;
                                         case "sql":
@@ -708,11 +707,10 @@
                                 default:
                                     switch (parsetype) {
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + cs + " < @" + this._params.length;
                                             if (this._IGNORECASE) {
-                                                this._params.push(constVal.toLowerCase());
+                                                theOperator = " " + fltr.prop + cs + " < \"" + constVal.toLowerCase() + "\"";
                                             } else {
-                                                this._params.push(constVal);
+                                                theOperator = " " + fltr.prop + cs + " < \"" + constVal + "\"";
                                             }
                                             break;
                                         case "sql":
@@ -782,11 +780,10 @@
                                             }
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + cs + " <= @" + this._params.length;
                                             if (this._IGNORECASE) {
-                                                this._params.push(constVal.toLowerCase());
+                                                theOperator = " " + fltr.prop + cs + "\"" + constVal.toLowerCase() + "\"";
                                             } else {
-                                                this._params.push(constVal);
+                                                theOperator = " " + fltr.prop + cs + "\"" + constVal + "\"";
                                             }
                                             break;
                                         case "sql":
@@ -855,11 +852,11 @@
                                             }
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + cs + " > @" + this._params.length;
+                                            theOperator = " " + fltr.prop + cs + " > \"";
                                             if (this._IGNORECASE) {
-                                                this._params.push(constVal.toLowerCase());
+                                                theOperator += constVal.toLowerCase() + "\"";
                                             } else {
-                                                this._params.push(constVal);
+                                                theOperator += constVal + "\"";
                                             }
                                             break;
                                         case "sql":
@@ -929,11 +926,11 @@
                                             }
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + cs + " >= @" + this._params.length;
+                                            theOperator = " " + fltr.prop + cs + " >= \"";
                                             if (this._IGNORECASE) {
-                                                this._params.push(constVal.toLowerCase());
+                                                theOperator += constVal.toLowerCase() + "\"";
                                             } else {
-                                                this._params.push(constVal);
+                                                theOperator += constVal + "\"";
                                             }
                                             break;
                                         case "sql":
@@ -965,11 +962,11 @@
                                     }
                                     break;
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + cs + ".StartsWith(@" + this._params.length + ")";
+                                    theOperator = " " + fltr.prop + cs + ".StartsWith(\"";
                                     if (this._IGNORECASE) {
-                                        this._params.push(constVal.toLowerCase());
+                                        theOperator += constVal.toLowerCase() + "\")";
                                     } else {
-                                        this._params.push(constVal);
+                                        theOperator += constVal + "\")";
                                     }
                                     break;
                                 case "sql":
@@ -1000,11 +997,11 @@
                                     }
                                     break;
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + cs + ".EndsWith(@" + this._params.length + ")";
+                                    theOperator = " " + fltr.prop + cs + ".EndsWith(\"";
                                     if (this._IGNORECASE) {
-                                        this._params.push(constVal.toLowerCase());
+                                        theOperator += constVal.toLowerCase() + "\")";
                                     } else {
-                                        this._params.push(constVal);
+                                        theOperator += constVal + "\")";
                                     }
                                     break;
                                 case "sql":
@@ -1060,11 +1057,10 @@
                                     switch (parsetype) {
                                         case "l2e":
                                             for (var tokIdx = 0; tokIdx < tokens.length; tokIdx++) {
-                                                theOperator += fltr.prop + ".Equals(@" + this._params.length + ") ";
+                                                theOperator += fltr.prop + ".Equals(\"" + tokens[tokIdx].trim() + "\")";
                                                 if (tokIdx !== tokens.length - 1) {
                                                     theOperator += " OR ";
                                                 }
-                                                this._params.push(tokens[tokIdx].trim());
                                             }
                                             break;
                                         case "ado":
@@ -1144,8 +1140,7 @@
                         case this._CONTAINS:
                             switch (parsetype) {
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + cs + ".Contains(@" + this._params.length + ")";
-                                    this._params.push(constVal);
+                                    theOperator = " " + fltr.prop + cs + ".Contains(\"" + constVal + "\")";
                                     break;
                                 case "ado":
                                     if (this._IGNORECASE) {
