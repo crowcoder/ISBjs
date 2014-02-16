@@ -413,7 +413,7 @@
                             'prop': this._props[0].value,
                             'oper': this._defaultConditions[0],
                             'cnst': '',
-                            'dataType': this._DEFTYPE
+                            'dataType': this._props[0].dataType
                         };
                     } else {
                         pushObj = [{
@@ -693,8 +693,7 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " < @" + this._params.length;
-                                            this._params.push(constVal);
+                                            theOperator = " " + fltr.prop + " < " + constVal;
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " < " + constVal;
@@ -757,8 +756,7 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " <= @" + this._params.length;
-                                            this._params.push(constVal);
+                                            theOperator = " " + fltr.prop + " <= " + constVal;
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " <= " + constVal;
@@ -829,8 +827,7 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " > @" + this._params.length;
-                                            this._params.push(constVal);
+                                            theOperator = " " + fltr.prop + " > " + constVal;
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " > " + constVal;
@@ -903,8 +900,7 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " >= @" + this._params.length;
-                                            this._params.push(constVal);
+                                            theOperator = " " + fltr.prop + " >= " + constVal;
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " >= " + constVal;
