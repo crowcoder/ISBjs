@@ -98,6 +98,11 @@ module com.contrivedexample.isbjs {
         private _BOOL: string = "bool";
         private _DATE: string = "date";
 
+        private _DTEQ:string = "({0}.Year = {1} And {0}.Month = {2} And {0}.Day = {3})";
+        private _DTLESS: string = "({0}.Year < {1} Or ({0}.Year = {1} And ({0}.Month < {2} Or ({0}.Month = {2} And {0}.Day < {3}))))";
+        private _DTGR: string = "({0}.Year > {1} Or ({0}.Year = {1} And ({0}.Month > {2} Or ({0}.Month = {2} And {0}.Day > {3}))))";
+        private _DTNE: string = " Not ({0}.Year = {1} And {0}.Month = {2} And {0}.Day = {3})";
+
         private _theInputs: Array<HTMLInputElement>;
 
         private _sql: string; // var to hold the sql code as it is being constructed
@@ -230,7 +235,8 @@ module com.contrivedexample.isbjs {
                     'prop': that._props[0].value,
                     'oper': that._defaultConditions[0],
                     'cnst': '',
-                    'dataType': that._DEFTYPE
+                    'dataType': that._props[0].dataType,
+                    'nullable': false
                 });
                 that.render();
             };
@@ -434,6 +440,7 @@ module com.contrivedexample.isbjs {
                                     inp.setAttribute("size", "10");
                                     inp.setAttribute("type", arr[i].dataType);
                                     inp.setAttribute("value", arr[i].cnst);
+                                    inp.setAttribute("nullable", arr[i].nullable);
                                     propsel["inpt"] = inp;
                                     inp.onchange = (function (idx: number, that) {
                                     return function () {
@@ -468,6 +475,7 @@ module com.contrivedexample.isbjs {
                                 for (var propIdx = 0; propIdx < that._props.length; propIdx++) {
                                     if (that._props[propIdx].value === this.value) {
                                         arr[idx].dataType = that._props[propIdx].dataType;
+                                        arr[idx].nullable = that._props[propIdx].nullable;
                                         break;
                                     }
                                 }
@@ -630,7 +638,7 @@ module com.contrivedexample.isbjs {
             //No data error found, lets do this...
             if (!parseerr) {
                 // console.log(JSON.stringify(this._theExpression));
-                var sqlstring: string = "";
+                //var sqlstring: string = "";
 
                 var pstfix = this.parseToPostFix();
 
@@ -641,7 +649,7 @@ module com.contrivedexample.isbjs {
                     }
                 }
                 this.postToInfix(pstfix, whichtype, this);
-                return [pstfix[0], this._params];
+                return [pstfix[0]]; //, this._params];
             }
             else {
                 return ["Missing search values exist"];
@@ -655,13 +663,15 @@ module com.contrivedexample.isbjs {
             var cs = this._IGNORECASE ? ".ToLower()" : ""; //store if query is case sensitive
             var constVal;
             var fmtDate;
+            var dt: Date;
+            var valueProp: string = ""; // ".Value" if the type is nullable, else empty string
 
             switch (fltr.dataType) {
                 case 'date':
-                    var dt = new Date(fltr.cnst);
+                    dt = new Date(fltr.cnst);
                     dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); //chop off timezone offset and daylight saving time
                     constVal = dt;
-                    fmtDate = dt.getFullYear() + "-" + (dt.getMonth() + 1) + "-" + dt.getDate();
+                    fmtDate = dt.getUTCFullYear() + "-" + (dt.getUTCMonth() + 1) + "-" + dt.getUTCDate();
                     break;
                 case 'number':
                     constVal = parseFloat(fltr.cnst);
@@ -678,8 +688,15 @@ module com.contrivedexample.isbjs {
                             switch (parsetype) {
                                 case "ado":
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + " = @" + this._params.length;
-                                    this._params.push(constVal);
+                                    var p
+                                    if (fltr.nullable) {
+                                        p = fltr.prop + ".Value";
+                                    } else {
+                                        p = fltr.prop;
+                                    }
+
+                                    theOperator = this.fmtStr(this._DTEQ, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " = '" + fmtDate + "'";
@@ -693,8 +710,8 @@ module com.contrivedexample.isbjs {
                             switch (parsetype) {
                                 case "ado":
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + " = @" + this._params.length;
-                                    this._params.push(constVal);
+                                    theOperator = " " + fltr.prop + " = " + constVal;
+                                    //this._params.push(constVal);
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " = " + constVal;
@@ -716,11 +733,11 @@ module com.contrivedexample.isbjs {
                                     }
                                     break;
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + cs + " = @" + this._params.length;
+                                    theOperator = " " + fltr.prop + cs + " = ";
                                     if (this._IGNORECASE) {
-                                        this._params.push(constVal.toLowerCase());
+                                        theOperator += constVal.toLowerCase();
                                     } else {
-                                        this._params.push(constVal);
+                                        theOperator += constVal;
                                     }
                                     break;
                                 case "sql":
@@ -749,8 +766,14 @@ module com.contrivedexample.isbjs {
                                     this._params.push(constVal);
                                     break;
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + " != @" + this._params.length;
-                                    this._params.push(constVal);
+                                    var p
+                                    if (fltr.nullable) {
+                                        p = fltr.prop + ".Value";
+                                    } else {
+                                        p = fltr.prop;
+                                    }
+
+                                    theOperator = this.fmtStr(this._DTNE, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " <> '" + fmtDate + "'";
@@ -767,8 +790,8 @@ module com.contrivedexample.isbjs {
                                     this._params.push(constVal);
                                     break;
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + " != @" + this._params.length;
-                                    this._params.push(constVal);
+                                    theOperator = " " + fltr.prop + " != " + constVal;
+                                    //this._params.push(constVal);
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " <> " + constVal;
@@ -790,11 +813,11 @@ module com.contrivedexample.isbjs {
                                     }
                                     break;
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + cs + " != @" + this._params.length;
+                                    theOperator = " " + fltr.prop + cs + " != \"";
                                     if (this._IGNORECASE) {
-                                        this._params.push(constVal.toLowerCase());
+                                        theOperator += constVal.toLowerCase() + "\"";
                                     } else {
-                                        this._params.push(constVal);
+                                        theOperator += constVal + "\"";
                                     }
                                     break;
                                 case "sql":
@@ -820,8 +843,13 @@ module com.contrivedexample.isbjs {
                             switch (parsetype) {
                                 case "ado":
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + " < @" + this._params.length;
-                                    this._params.push(constVal);
+                                    var p;
+                                    if (fltr.nullable) {
+                                        p = fltr.prop + ".Value";
+                                    } else {
+                                        p = fltr.prop;
+                                    }
+                                    theOperator = this.fmtStr(this._DTLESS, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " < '" + fmtDate + "'";
@@ -878,9 +906,15 @@ module com.contrivedexample.isbjs {
                         case "ado":
                         case "date":
                             switch (parsetype) {
-                                case "l2e":
-                                    theOperator = " " + fltr.prop + " <= @" + this._params.length;
-                                    this._params.push(constVal);
+                                case "l2e":                                    
+                                    var tmpl = "(" + this._DTLESS + " Or " + this._DTEQ + ")";
+                                    var p;
+                                    if (fltr.nullable) {
+                                        p = fltr.prop + ".Value";
+                                    } else {
+                                        p = fltr.prop;
+                                    }
+                                    theOperator = this.fmtStr(tmpl, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " <= '" + fmtDate + "'";
@@ -947,8 +981,13 @@ module com.contrivedexample.isbjs {
                             switch (parsetype) {
                                 case "ado":
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + " > @" + this._params.length;
-                                    this._params.push(constVal);
+                                    var p;
+                                    if (fltr.nullable) {
+                                        p = fltr.prop + ".Value";
+                                    } else {
+                                        p = fltr.prop;
+                                    }
+                                    theOperator = this.fmtStr(this._DTGR, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " > '" + fmtDate + "'";
@@ -1015,8 +1054,15 @@ module com.contrivedexample.isbjs {
                             switch (parsetype) {
                                 case "ado":
                                 case "l2e":
-                                    theOperator = " " + fltr.prop + " >= @" + this._params.length;
-                                    this._params.push(constVal);
+                                    var p,
+                                        tmpl = "(" + this._DTGR + " Or " + this._DTEQ + ")";
+                                    if (fltr.nullable) {
+                                        p = fltr.prop + ".Value";
+                                    } else {
+                                        p = fltr.prop;
+                                    }
+                                    theOperator = this.fmtStr(tmpl, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+                                    break;
                                     break;
                                 case "sql":
                                     theOperator = " " + fltr.prop + " >= '" + fmtDate + "'";
@@ -1267,7 +1313,7 @@ module com.contrivedexample.isbjs {
 
                     break;
                 case this._CONTAINS:
-                    
+
                     switch (parsetype) {
                         case "l2e":
                             theOperator = " " + fltr.prop + cs + ".Contains(@" + this._params.length + ")";
@@ -1277,7 +1323,7 @@ module com.contrivedexample.isbjs {
                             if (this._IGNORECASE) {
                                 theOperator = " LOWER(" + fltr.prop + ") LIKE @" + this._params.length;
                                 this._params.push("%" + constVal.toLowerCase() + "%");
-                            }else{
+                            } else {
                                 theOperator = " " + fltr.prop + " LIKE @" + this._params.length;
                                 this._params.push("%" + constVal + "%");
                             }
@@ -1287,14 +1333,14 @@ module com.contrivedexample.isbjs {
                                 theOperator = " LOWER(" + fltr.prop + ") LIKE '%" + constVal.toLowerCase() + "%'";
                             } else {
                                 theOperator = " " + fltr.prop + " LIKE '%" + constVal + "%'";
-                            }                            
+                            }
                             break;
                         case "odata":
                             if (this._IGNORECASE) {
                                 theOperator = " substringof('" + constVal.toLowerCase() + "', tolower(" + fltr.prop + "))";
                             } else {
                                 theOperator = " substringof('" + constVal + "', " + fltr.prop + ")";
-                            }                            
+                            }
                             break;
                         default:
                             break;
@@ -1396,7 +1442,7 @@ module com.contrivedexample.isbjs {
         }
 
         postToInfix(theArr, whichtype, that) {
-            
+
             for (var fixIdx = 0; fixIdx < theArr.length; fixIdx++) {
                 var andor = theArr[fixIdx];
                 if (andor === "AND" || andor === "OR") {
@@ -1418,5 +1464,21 @@ module com.contrivedexample.isbjs {
             }
         }
 
+        /// this function adapted from https://gist.github.com/bux578/4386965
+        fmtStr(...items) : string{
+            // The string containing the format items (e.g. "{0}")
+            // will and always has to be the first argument.
+            var theString = arguments[0];
+
+            // start with the second argument (i = 1)
+            for (var i = 1; i < arguments.length; i++) {
+                // "gm" = RegEx options for Global search (more than one instance)
+                // and for Multiline search
+                var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
+                theString = theString.replace(regEx, arguments[i]);
+            }
+
+            return theString;
+        }
     }
 }

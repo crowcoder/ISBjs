@@ -18,8 +18,6 @@
     <br />
     <label for="dynLinq">Dynamic Linq:</label><br />
     <textarea id="dynLinq" class="resultdiv"></textarea><br />
-    <label for="ado">ADO.Net</label><br />
-    <textarea id="ado" class="resultdiv"></textarea><br/>
     <label for="sql">SQL:</label><br />
     <textarea id="sql" class="resultdiv"></textarea><br />
     <label for="linqExpr">Postfix Expression:</label><br />
@@ -76,28 +74,35 @@
                 "ignoreCase" : true
             });
 
-            isb.addFilterProperty({ "display": "Surname", "value": "Surname", "dataType": "text" });
-            isb.addFilterProperty({ "display": "Bill Rate", "value": "BillRate", "dataType": "number" });
-            isb.addFilterProperty({ "display": "City", "value": "Town", "dataType": "text" });
-            isb.addFilterProperty({ "display": "Date of hire", "value": "DOH", "dataType": "date" })
-            isb.addFilterProperty({ "display": "Is Crew", "value": "IsCrew", "dataType": "bool" })
-          
+            isb.addFilterProperty({ "display": "OrderID", "value": "OrderID", "dataType": "number" });
+            isb.addFilterProperty({ "display": "CustomerID", "value": "CustomerID", "dataType": "text" });
+            isb.addFilterProperty({ "display": "EmployeeID", "value": "EmployeeID", "dataType": "number" });
+            isb.addFilterProperty({ "display": "OrderDate", "value": "OrderDate", "dataType": "date", "nullable": true });
+            isb.addFilterProperty({ "display": "RequiredDate", "value": "RequiredDate", "dataType": "date", "nullable": true });
+            isb.addFilterProperty({ "display": "ShippedDate", "value": "ShippedDate", "dataType": "date", "nullable": true });
+            isb.addFilterProperty({ "display": "ShipVia", "value": "ShipVia", "dataType": "number" });
+            isb.addFilterProperty({ "display": "Freight", "value": "Freight", "dataType": "number" });
+            isb.addFilterProperty({ "display": "ShipName", "value": "ShipName", "dataType": "text" });
+            isb.addFilterProperty({ "display": "ShipAddress", "value": "ShipAddress", "dataType": "text" });
+            isb.addFilterProperty({ "display": "ShipCity", "value": "ShipCity", "dataType": "text" });
+            isb.addFilterProperty({ "display": "ShipRegion", "value": "ShipRegion", "dataType": "text" });
+            isb.addFilterProperty({ "display": "ShipPostalCode", "value": "ShipPostalCode", "dataType": "text" });
+            isb.addFilterProperty({ "display": "ShipCountry", "value": "ShipCountry", "dataType": "text" });
+            isb.addFilterProperty({ "display": "IsTrue", "value": "IsTrue", "dataType": "bool" });
+                      
             //isb.render();
         };
 
         function parse() {
             var linqresults = isb.parse("l2e");
-            var adoresults = isb.parse("ado");
+            //var adoresults = isb.parse("ado");
             var sqlresults = isb.parse("sql");
             var odataresults = isb.parse("odata");
             var postfixresults = isb.parseToPostFix();
 
             var dynlnq = document.querySelector("#dynLinq");
             dynlnq.value = linqresults.join();
-            
-            var ado = document.querySelector("#ado");
-            ado.value = adoresults;
-
+         
             var sql = document.querySelector("#sql");
             sql.value = sqlresults;
 

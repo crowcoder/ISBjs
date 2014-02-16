@@ -11,6 +11,10 @@
                     this._NUMBER = "number";
                     this._BOOL = "bool";
                     this._DATE = "date";
+                    this._DTEQ = "({0}.Year = {1} And {0}.Month = {2} And {0}.Day = {3})";
+                    this._DTLESS = "({0}.Year < {1} Or ({0}.Year = {1} And ({0}.Month < {2} Or ({0}.Month = {2} And {0}.Day < {3}))))";
+                    this._DTGR = "({0}.Year > {1} Or ({0}.Year = {1} And ({0}.Month > {2} Or ({0}.Month = {2} And {0}.Day > {3}))))";
+                    this._DTNE = " Not ({0}.Year = {1} And {0}.Month = {2} And {0}.Day = {3})";
                     this._params = [];
                     this._fltrConfig = fltrConfig;
                     this._props = [];
@@ -83,7 +87,8 @@
                             'prop': that._props[0].value,
                             'oper': that._defaultConditions[0],
                             'cnst': '',
-                            'dataType': that._DEFTYPE
+                            'dataType': that._props[0].dataType,
+                            'nullable': false
                         });
                         that.render();
                     };
@@ -274,6 +279,7 @@
                                             inp.setAttribute("size", "10");
                                             inp.setAttribute("type", arr[i].dataType);
                                             inp.setAttribute("value", arr[i].cnst);
+                                            inp.setAttribute("nullable", arr[i].nullable);
                                             propsel["inpt"] = inp;
                                             inp.onchange = (function (idx, that) {
                                                 return function () {
@@ -306,6 +312,7 @@
                                         for (var propIdx = 0; propIdx < that._props.length; propIdx++) {
                                             if (that._props[propIdx].value === this.value) {
                                                 arr[idx].dataType = that._props[propIdx].dataType;
+                                                arr[idx].nullable = that._props[propIdx].nullable;
                                                 break;
                                             }
                                         }
@@ -465,8 +472,7 @@
                     //No data error found, lets do this...
                     if (!parseerr) {
                         // console.log(JSON.stringify(this._theExpression));
-                        var sqlstring = "";
-
+                        //var sqlstring: string = "";
                         var pstfix = this.parseToPostFix();
 
                         for (var i = 0; i < pstfix.length; i++) {
@@ -475,7 +481,7 @@
                             }
                         }
                         this.postToInfix(pstfix, whichtype, this);
-                        return [pstfix[0], this._params];
+                        return [pstfix[0]];
                     } else {
                         return ["Missing search values exist"];
                     }
@@ -488,13 +494,15 @@
                     var cs = this._IGNORECASE ? ".ToLower()" : "";
                     var constVal;
                     var fmtDate;
+                    var dt;
+                    var valueProp = "";
 
                     switch (fltr.dataType) {
                         case 'date':
-                            var dt = new Date(fltr.cnst);
+                            dt = new Date(fltr.cnst);
                             dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); //chop off timezone offset and daylight saving time
                             constVal = dt;
-                            fmtDate = dt.getFullYear() + "-" + (dt.getMonth() + 1) + "-" + dt.getDate();
+                            fmtDate = dt.getUTCFullYear() + "-" + (dt.getUTCMonth() + 1) + "-" + dt.getUTCDate();
                             break;
                         case 'number':
                             constVal = parseFloat(fltr.cnst);
@@ -511,8 +519,15 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " = @" + this._params.length;
-                                            this._params.push(constVal);
+                                            var p;
+                                            if (fltr.nullable) {
+                                                p = fltr.prop + ".Value";
+                                            } else {
+                                                p = fltr.prop;
+                                            }
+
+                                            theOperator = this.fmtStr(this._DTEQ, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " = '" + fmtDate + "'";
@@ -526,8 +541,8 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " = @" + this._params.length;
-                                            this._params.push(constVal);
+                                            theOperator = " " + fltr.prop + " = " + constVal;
+
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " = " + constVal;
@@ -549,11 +564,11 @@
                                             }
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + cs + " = @" + this._params.length;
+                                            theOperator = " " + fltr.prop + cs + " = ";
                                             if (this._IGNORECASE) {
-                                                this._params.push(constVal.toLowerCase());
+                                                theOperator += constVal.toLowerCase();
                                             } else {
-                                                this._params.push(constVal);
+                                                theOperator += constVal;
                                             }
                                             break;
                                         case "sql":
@@ -582,8 +597,14 @@
                                             this._params.push(constVal);
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " != @" + this._params.length;
-                                            this._params.push(constVal);
+                                            var p;
+                                            if (fltr.nullable) {
+                                                p = fltr.prop + ".Value";
+                                            } else {
+                                                p = fltr.prop;
+                                            }
+
+                                            theOperator = this.fmtStr(this._DTNE, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " <> '" + fmtDate + "'";
@@ -600,8 +621,8 @@
                                             this._params.push(constVal);
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " != @" + this._params.length;
-                                            this._params.push(constVal);
+                                            theOperator = " " + fltr.prop + " != " + constVal;
+
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " <> " + constVal;
@@ -623,11 +644,11 @@
                                             }
                                             break;
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + cs + " != @" + this._params.length;
+                                            theOperator = " " + fltr.prop + cs + " != \"";
                                             if (this._IGNORECASE) {
-                                                this._params.push(constVal.toLowerCase());
+                                                theOperator += constVal.toLowerCase() + "\"";
                                             } else {
-                                                this._params.push(constVal);
+                                                theOperator += constVal + "\"";
                                             }
                                             break;
                                         case "sql":
@@ -653,8 +674,13 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " < @" + this._params.length;
-                                            this._params.push(constVal);
+                                            var p;
+                                            if (fltr.nullable) {
+                                                p = fltr.prop + ".Value";
+                                            } else {
+                                                p = fltr.prop;
+                                            }
+                                            theOperator = this.fmtStr(this._DTLESS, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " < '" + fmtDate + "'";
@@ -712,8 +738,14 @@
                                 case "date":
                                     switch (parsetype) {
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " <= @" + this._params.length;
-                                            this._params.push(constVal);
+                                            var tmpl = "(" + this._DTLESS + " Or " + this._DTEQ + ")";
+                                            var p;
+                                            if (fltr.nullable) {
+                                                p = fltr.prop + ".Value";
+                                            } else {
+                                                p = fltr.prop;
+                                            }
+                                            theOperator = this.fmtStr(tmpl, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " <= '" + fmtDate + "'";
@@ -780,8 +812,13 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " > @" + this._params.length;
-                                            this._params.push(constVal);
+                                            var p;
+                                            if (fltr.nullable) {
+                                                p = fltr.prop + ".Value";
+                                            } else {
+                                                p = fltr.prop;
+                                            }
+                                            theOperator = this.fmtStr(this._DTGR, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " > '" + fmtDate + "'";
@@ -848,8 +885,14 @@
                                     switch (parsetype) {
                                         case "ado":
                                         case "l2e":
-                                            theOperator = " " + fltr.prop + " >= @" + this._params.length;
-                                            this._params.push(constVal);
+                                            var p, tmpl = "(" + this._DTGR + " Or " + this._DTEQ + ")";
+                                            if (fltr.nullable) {
+                                                p = fltr.prop + ".Value";
+                                            } else {
+                                                p = fltr.prop;
+                                            }
+                                            theOperator = this.fmtStr(tmpl, p, dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+                                            break;
                                             break;
                                         case "sql":
                                             theOperator = " " + fltr.prop + " >= '" + fmtDate + "'";
@@ -1240,6 +1283,26 @@
                             that.postToInfix(theArr, whichtype, that);
                         }
                     }
+                };
+
+                /// this function adapted from https://gist.github.com/bux578/4386965
+                Isb.prototype.fmtStr = function () {
+                    var items = [];
+                    for (var _i = 0; _i < (arguments.length - 0); _i++) {
+                        items[_i] = arguments[_i + 0];
+                    }
+                    // The string containing the format items (e.g. "{0}")
+                    // will and always has to be the first argument.
+                    var theString = arguments[0];
+
+                    for (var i = 1; i < arguments.length; i++) {
+                        // "gm" = RegEx options for Global search (more than one instance)
+                        // and for Multiline search
+                        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
+                        theString = theString.replace(regEx, arguments[i]);
+                    }
+
+                    return theString;
                 };
                 return Isb;
             })();
