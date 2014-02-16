@@ -31,9 +31,9 @@
         window.onload = function () {
 
             var langmap = {
-                "equal": "Is equal to",
-                "notequal": "<>",
-                "startswith": "Starts with",
+                "equal": "=",
+                "notequal": " not equal ",
+                "startswith": " starts with",
                 "endswith": "Ends with",
                 "istrue": "Is true",
                 "isfalse": "Is false",
@@ -51,6 +51,7 @@
             }
 
             isb = new com.contrivedexample.isbjs.Isb({
+                "langmap": langmap,
                 "listClass": "isbLi",
                 "listItemClass": "isbLi",
                 "andOrLiClass": "isbLi",
@@ -71,7 +72,7 @@
                     { "attr_Name": "data-role", "attrValue": "superman" }
                 ],
                 "propSelOptClass": "marque spin",
-                "ignoreCase" : true
+                "ignoreCase" : false
             });
 
             isb.addFilterProperty({ "display": "OrderID", "value": "OrderID", "dataType": "number" });

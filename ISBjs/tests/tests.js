@@ -11,7 +11,7 @@
 
     isb._theExpression = theObj;
     isb.render();
-    var whr = isb.parseForLinq();
+    var whr = isb.parse("l2e");
 
     ok(typeof whr[0] === "string", 'Index zero of parsed output is a string.');
 });
@@ -31,28 +31,22 @@ test("Test Linq to Entities for Not Equals for all data types with ignore case",
     isb._IGNORECASE = true;
     isb._theExpression =
         [{ "prop": "Surname", "oper": "Is not equal to", "cnst": "bob", "dataType": "text" }, "AND", { "prop": "BillRate", "oper": "Is not equal to", "cnst": "10", "dataType": "number" }, "AND", { "prop": "DOH", "oper": "Is not equal to", "cnst": "7/1/2008", "dataType": "date" }];
-
-    var expected1 = " Surname.ToLower() != @0 AND  BillRate != @1 AND  DOH != @2";
-    var expected2 = "[\"bob\",10,\"2008-07-01T00:00:00.000Z\"]";
-
-    var actual = isb.parseForLinq();
+    
+    var expected1 = "( Surname.ToLower() != \"bob\" AND ( BillRate != 10 AND  Not (DOH.Year = 2008 And DOH.Month = 7 And DOH.Day = 1)))";
+    var actual = isb.parse("l2e");
 
     deepEqual(actual[0], expected1);
-    deepEqual(actual[1], expected2);
 });
 
 test("Test Linq to Entities parsing for Not Equals for all data types and case sensitive", function () {
     isb._IGNORECASE = false;
     isb._theExpression =
         [{ "prop": "Surname", "oper": "Is not equal to", "cnst": "bob", "dataType": "text" }, "AND", { "prop": "BillRate", "oper": "Is not equal to", "cnst": "10", "dataType": "number" }, "AND", { "prop": "DOH", "oper": "Is not equal to", "cnst": "7/1/2008", "dataType": "date" }];
-
-    var expected1 = " Surname != @0 AND  BillRate != @1 AND  DOH != @2";
-    var expected2 = "[\"bob\",10,\"2008-07-01T00:00:00.000Z\"]";
-
-    var actual = isb.parseForLinq();
-
+    
+    var expected1 = "( Surname != \"bob\" AND ( BillRate != 10 AND  Not (DOH.Year = 2008 And DOH.Month = 7 And DOH.Day = 1)))";
+    
+    var actual = isb.parse("l2e");
     deepEqual(actual[0], expected1);
-    deepEqual(actual[1], expected2);
 });
 
 test("Test case sensitive for Linq to Entities parsing.", function () {
@@ -60,20 +54,18 @@ test("Test case sensitive for Linq to Entities parsing.", function () {
     isb._theExpression =
         [{ "prop": "Surname", "oper": "Is not equal to", "cnst": "Bob", "dataType": "text" }];
 
-    var expected = "[\"Bob\"]";
-    var actual = isb.parseForLinq();
-    deepEqual(actual[1], expected, "As expected, a case-sensitive compare does not lower case the user entered value.");
+    var expected = " Surname != \"Bob\"";
+    var actual = isb.parse("l2e");
+    deepEqual(actual[0], expected, "As expected, a case-sensitive compare does not lower case the user entered value.");
 });
 
 test("Test each available operator on text type data - Case Sensitive.", function(){
     isb._IGNORECASE = false;
     isb._theExpression = [{"prop":"Surname","oper":"Is equal to","cnst":"foo","dataType":"text"},"AND",{"prop":"Surname","oper":"Is not equal to","cnst":"foo","dataType":"text"},"AND",{"prop":"Surname","oper":"Contains","cnst":"oo","dataType":"text"},"AND",{"prop":"Surname","oper":"Starts with","cnst":"foo","dataType":"text"},"AND",{"prop":"Surname","oper":"Ends with","cnst":"foo","dataType":"text"},"AND",{"prop":"Surname","oper":"Is in","cnst":"foo,bar, bazz","dataType":"text"},"AND",{"prop":"Surname","oper":"Is null","cnst":"","dataType":"text"},"AND",{"prop":"Surname","oper":"Is not equal to","cnst":"foo","dataType":"text"},"AND",{"prop":"Surname","oper":"Is not null","cnst":"","dataType":"text"},"AND",{"prop":"Surname","oper":"Is less than","cnst":"f","dataType":"text"},"AND",{"prop":"Surname","oper":"Is greater than","cnst":"f","dataType":"text"}];
 
-    var expected1 = " Surname = @0 AND  Surname != @1 AND  Surname.Contains(@2) AND  Surname.StartsWith(@3) AND  Surname.EndsWith(@4) AND (Surname.Equals(@5) OR Surname.Equals(@6) OR Surname.Equals(@7) )  AND  Surname = Null AND  Surname != @8 AND  Surname Not = Null AND  Surname < @9 AND  Surname > @10";
+    var expected1 = "( Surname = \"foo\" AND ( Surname != \"foo\" AND ( Surname.Contains(\"oo\") AND ( Surname.StartsWith(\"foo\") AND ( Surname.EndsWith(\"foo\") AND ((Surname.Equals(\"foo\") OR Surname.Equals(\"bar\") OR Surname.Equals(\"bazz\"))  AND ( Surname = Null AND ( Surname != \"foo\" AND ( Surname != Null AND ( Surname < \"f\" AND  Surname > \"f\"))))))))))";
 
-    var expected2 = "[\"foo\",\"foo\",\"oo\",\"foo\",\"foo\",\"foo\",\"bar\",\"bazz\",\"foo\",\"f\",\"f\"]";
-    var actual = isb.parseForLinq();
+    var actual = isb.parse("l2e");
     deepEqual(actual[0], expected1);
-    deepEqual(actual[1], expected2);
 });
 
