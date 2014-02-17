@@ -18,15 +18,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app.css" />
-    <Content Include="app.js" />
     <Content Include="default.htm" />
+    <Content Include="isb.js" />
     <Content Include="tests\qunit-1.12.0.css" />
     <Content Include="tests\qunit-1.12.0.js" />
     <Content Include="tests\runner.html" />
     <Content Include="tests\tests.js" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="app.ts" />
+    <TypeScriptCompile Include="isb.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="web.config" />

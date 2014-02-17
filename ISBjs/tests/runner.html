@@ -22,7 +22,7 @@
     <div id="qunit"></div>
     <div id="qunit-fixture"></div>
     
-    <script src="../app.js"></script>
+    <script src="../isb.js"></script>
     <script src="qunit-1.12.0.js"></script>
     <script src="tests.js"></script>
     <script>
@@ -79,7 +79,7 @@
         };
 
         function parse() {
-            var linqresults = isb.parseForLinq();
+            var linqresults = isb.parse("l2e");
             var dynlnq = document.querySelector("#dynLinq");
             dynlnq.innerHTML = '';
             dynlnq.innerHTML = linqresults.join();
