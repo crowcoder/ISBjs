@@ -226,7 +226,7 @@ module com.contrivedexample.isbjs {
             goBtn.onclick = function () {
                 var btnRole = this.getAttribute("data-role");
                 if (btnRole === "start") {
-                    this.innerHTML = "Reset";
+                    this.innerHTML = that._RESET;
                     this.setAttribute("data-role", "reset");
                 }
 
@@ -354,9 +354,9 @@ module com.contrivedexample.isbjs {
                     }
 
                     if (this.implementsAttr(this._fltrConfig.propSelOptAttributes)) {
-                        for (var andOrIdx = 0; andOrIdx < this._fltrConfig.andOrLiAttributes.length; andOrIdx++) {
-                            andornode.setAttribute(this._fltrConfig.andOrLiAttributes[andOrIdx].attrName,
-                                this._fltrConfig.andOrLiAttributes[andOrIdx].attrValue);
+                        for (var propselIdx = 0; propselIdx < this._fltrConfig.propSelOptAttributes.length; propselIdx++) {
+                            andornode.setAttribute(this._fltrConfig.propSelOptAttributes[propselIdx].attrName,
+                                this._fltrConfig.propSelOptAttributes[propselIdx].attrValue);
                         }
                     }
 
@@ -375,7 +375,7 @@ module com.contrivedexample.isbjs {
                     orOpt.setAttribute("value", "OR");
                     orOpt.appendChild(document.createTextNode("OR"));
 
-                    if (this.implementsFilter(this._fltrConfig.andOrOptAttributes)) {
+                    if (this.implementsAttr(this._fltrConfig.andOrOptAttributes)) {
                         for (var andOrOptIdx = 0; andOrOptIdx < this._fltrConfig.andOrOptAttributes.length; andOrOptIdx++) {
                             andOpt.setAttribute(this._fltrConfig.andOrOptAttributes[andOrOptIdx].attrName,
                                 this._fltrConfig.andOrOptAttributes[andOrOptIdx].attrValue);
@@ -440,7 +440,6 @@ module com.contrivedexample.isbjs {
                                     inp.setAttribute("size", "10");
                                     inp.setAttribute("type", arr[i].dataType);
                                     inp.setAttribute("value", arr[i].cnst);
-                                    inp.setAttribute("nullable", arr[i].nullable);
                                     propsel["inpt"] = inp;
                                     inp.onchange = (function (idx: number, that) {
                                     return function () {

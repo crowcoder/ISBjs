@@ -13,6 +13,14 @@
         </div>
         <ul id="srchUL"></ul>
     </div>
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
     <button id="parseBtn" onclick="parse();">Parse</button>
 
     <br />
@@ -50,28 +58,51 @@
                 "reset": "Reset"
             }
 
+            //var langmap = {
+            //    "equal": "es igual a",
+            //    "notequal": "no es igual a",
+            //    "startswith": "comienza con",
+            //    "endswith": "termina with",
+            //    "istrue": "es cierto",
+            //    "isfalse": "Is falso",
+            //    "isnull": "es null",
+            //    "isnotnull": "no es null",
+            //    "contains": "contiene",
+            //    "greater": "es mayor que",
+            //    "greatereq": "es mayor o igual a",
+            //    "less": "es menos de",
+            //    "lesseq": "es menos o igual a",
+            //    "isin": "está en",
+            //    "isnotin": "no es en",
+            //    "defsrch": "definir la búsqueda",
+            //    "reset": "volver a empezar"
+            //}
+
             isb = new com.contrivedexample.isbjs.Isb({
                 "langmap": langmap,
-                "listClass": "isbLi",
-                "listItemClass": "isbLi",
-                "andOrLiClass": "isbLi",
-                "propSelClass": "isbselect",
-                "operSelClass": "isbselect",
-                "andOrSelClass": "isbselect",
-                "btnClass": "isbBtn",
-                "valueInputClass": "isbinput",
-                "valueInputErrClass": "errorOnInput",
+                "listItemClass": "listItemClass",
+                "andOrSelClass": "andOrSelClass",
+                "andOrLiClass": "andOrLiClass",
+                "propSelClass": "propSelClass",
+                "propSelOptClass": "propSelOptClass",
+                "operSelClass": "operSelClass",                
+                "btnClass": "btnClass",
+                "valueInputClass": "valueInputClass",
+                "valueInputErrClass": "valueInputErrClass",
                 "propSelAttributes": [
-                    { "attr_Name": "MyAttr1", "attrValue": "aOne" },
-                    { "attr_Name": "MyAttr2", "attrValue": "aTwo" }
+                    { "attrName": "MyAttr1", "attrValue": "aOne" },
+                    { "attrName": "MyAttr2", "attrValue": "aTwo" }
+                ],
+                "propSelOptAttributes": [
+                    { "attrName": "data-toggle", "attrValue": "foo" },
+                    { "attrName": "data-role", "attrValue": "superman" }
+                ],
+                "andOrOptAttributes": [
+                    { "attrName": "data-andor1", "attrValue": "jenny" },
+                    { "attrName": "data-andor2", "attrValue": "8675309" }
                 ],
                 "divName": "content",
                 "ulName": "srchUL",
-                "propSelOptAttributes": [
-                    { "attr_Name": "data-toggle", "attrValue": "foo" },
-                    { "attr_Name": "data-role", "attrValue": "superman" }
-                ],
-                "propSelOptClass": "marque spin",
                 "ignoreCase" : false
             });
 
