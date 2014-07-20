@@ -98,7 +98,7 @@ module com.contrivedexample.isbjs {
         private _BOOL: string = "bool";
         private _DATE: string = "date";
 
-        private _DTEQ:string = "({0}.Year = {1} And {0}.Month = {2} And {0}.Day = {3})";
+        private _DTEQ: string = "({0}.Year = {1} And {0}.Month = {2} And {0}.Day = {3})";
         private _DTLESS: string = "({0}.Year < {1} Or ({0}.Year = {1} And ({0}.Month < {2} Or ({0}.Month = {2} And {0}.Day < {3}))))";
         private _DTGR: string = "({0}.Year > {1} Or ({0}.Year = {1} And ({0}.Month > {2} Or ({0}.Month = {2} And {0}.Day > {3}))))";
         private _DTNE: string = " Not ({0}.Year = {1} And {0}.Month = {2} And {0}.Day = {3})";
@@ -245,9 +245,11 @@ module com.contrivedexample.isbjs {
         }
 
         //Add a 'field name' to the list of choices.
-        addFilterProperty(prop: IsbFiterProperty): void {
-            this._props.push(prop);
-            //recreate the prop select each time an item is added
+        addFilterProperty(props: Array<IsbFiterProperty>): void {
+            
+            for (var idx = 0; idx < props.length; idx++) {
+                this._props.push(props[idx]);
+            }
             this._propSelect = this.createPropSelect();
         }
 
@@ -874,7 +876,7 @@ module com.contrivedexample.isbjs {
                         default:
                             switch (parsetype) {
                                 case "l2e":
-                                    
+
                                     if (this._IGNORECASE) {
                                         theOperator = " " + fltr.prop + cs + " < \"" + constVal.toLowerCase() + "\"";
                                     } else {
@@ -903,7 +905,7 @@ module com.contrivedexample.isbjs {
                         case "ado":
                         case "date":
                             switch (parsetype) {
-                                case "l2e":                                    
+                                case "l2e":
                                     var tmpl = "(" + this._DTLESS + " Or " + this._DTEQ + ")";
                                     var p;
                                     if (fltr.nullable) {
@@ -946,9 +948,9 @@ module com.contrivedexample.isbjs {
                                         this._params.push(constVal);
                                     }
                                     break;
-                                case "l2e":                                    
+                                case "l2e":
                                     if (this._IGNORECASE) {
-                                        theOperator = " " + fltr.prop + cs + "\""  + constVal.toLowerCase() + "\"";
+                                        theOperator = " " + fltr.prop + cs + "\"" + constVal.toLowerCase() + "\"";
                                     } else {
                                         theOperator = " " + fltr.prop + cs + "\"" + constVal + "\"";
                                     }
@@ -1456,7 +1458,7 @@ module com.contrivedexample.isbjs {
         }
 
         /// this function adapted from https://gist.github.com/bux578/4386965
-        fmtStr(...items) : string{
+        fmtStr(...items): string {
             // The string containing the format items (e.g. "{0}")
             // will and always has to be the first argument.
             var theString = arguments[0];

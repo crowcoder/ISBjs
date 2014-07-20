@@ -106,23 +106,24 @@
                 "ignoreCase" : false
             });
 
-            isb.addFilterProperty({ "display": "OrderID", "value": "OrderID", "dataType": "number" });
-            isb.addFilterProperty({ "display": "CustomerID", "value": "CustomerID", "dataType": "text" });
-            isb.addFilterProperty({ "display": "EmployeeID", "value": "EmployeeID", "dataType": "number" });
-            isb.addFilterProperty({ "display": "OrderDate", "value": "OrderDate", "dataType": "date", "nullable": true });
-            isb.addFilterProperty({ "display": "RequiredDate", "value": "RequiredDate", "dataType": "date", "nullable": true });
-            isb.addFilterProperty({ "display": "ShippedDate", "value": "ShippedDate", "dataType": "date", "nullable": true });
-            isb.addFilterProperty({ "display": "ShipVia", "value": "ShipVia", "dataType": "number" });
-            isb.addFilterProperty({ "display": "Freight", "value": "Freight", "dataType": "number" });
-            isb.addFilterProperty({ "display": "ShipName", "value": "ShipName", "dataType": "text" });
-            isb.addFilterProperty({ "display": "ShipAddress", "value": "ShipAddress", "dataType": "text" });
-            isb.addFilterProperty({ "display": "ShipCity", "value": "ShipCity", "dataType": "text" });
-            isb.addFilterProperty({ "display": "ShipRegion", "value": "ShipRegion", "dataType": "text" });
-            isb.addFilterProperty({ "display": "ShipPostalCode", "value": "ShipPostalCode", "dataType": "text" });
-            isb.addFilterProperty({ "display": "ShipCountry", "value": "ShipCountry", "dataType": "text" });
-            isb.addFilterProperty({ "display": "IsTrue", "value": "IsTrue", "dataType": "bool" });
-                      
-            //isb.render();
+            var filterProperties = [{ "display": "OrderID", "value": "OrderID", "dataType": "number" },
+                { "display": "CustomerID", "value": "CustomerID", "dataType": "text" },
+                { "display": "EmployeeID", "value": "EmployeeID", "dataType": "number" },
+                { "display": "OrderDate", "value": "OrderDate", "dataType": "date", "nullable": true },
+                { "display": "RequiredDate", "value": "RequiredDate", "dataType": "date", "nullable": true },
+                { "display": "ShippedDate", "value": "ShippedDate", "dataType": "date", "nullable": true },
+                { "display": "ShipVia", "value": "ShipVia", "dataType": "number" },
+                { "display": "Freight", "value": "Freight", "dataType": "number" },
+                { "display": "ShipName", "value": "ShipName", "dataType": "text" },
+                { "display": "ShipAddress", "value": "ShipAddress", "dataType": "text" },
+                { "display": "ShipCity", "value": "ShipCity", "dataType": "text" },
+                { "display": "ShipRegion", "value": "ShipRegion", "dataType": "text" },
+                { "display": "ShipPostalCode", "value": "ShipPostalCode", "dataType": "text" },
+                { "display": "ShipCountry", "value": "ShipCountry", "dataType": "text" },
+                { "display": "IsTrue", "value": "IsTrue", "dataType": "bool" }
+            ];
+
+            isb.addFilterProperty(filterProperties);
         };
 
         function parse() {

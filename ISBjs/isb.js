@@ -97,10 +97,10 @@
                 };
 
                 //Add a 'field name' to the list of choices.
-                Isb.prototype.addFilterProperty = function (prop) {
-                    this._props.push(prop);
-
-                    //recreate the prop select each time an item is added
+                Isb.prototype.addFilterProperty = function (props) {
+                    for (var idx = 0; idx < props.length; idx++) {
+                        this._props.push(props[idx]);
+                    }
                     this._propSelect = this.createPropSelect();
                 };
 
