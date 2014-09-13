@@ -10,3 +10,5 @@ Parse to SQL - Not using Linq? You can also parse to a standard SQL clause for u
 Parse to OData - this generates a string suitable for use in an OData query. This feature was built by referencing the OData spec, but it is as yet untested. Do not consider this production ready.
 
 Parse to PostFix - The search expression in postfix notation to facilitate chaining your own expression trees in .Net or any language that supports such constructs. 
+
+More info including code examples is available in the wiki.
