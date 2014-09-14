@@ -1,12 +1,12 @@
 ﻿test("Test parsing of contrived expression", function () {
     
     var theObj = [
-        { "prop": "lastname", "oper": "Is equal to", "cnst": "one", "dataType": "text" },
+        { "prop": "lastname", "oper": "Is equal to", "cnst": "one", "dataType": "text", "nullable": false },
         "AND",
-        { "prop": "gender", "oper": "Starts with", "cnst": "two", "dataType": "text" },
+        { "prop": "gender", "oper": "Starts with", "cnst": "two", "dataType": "text", "nullable": false },
         "OR",
-        [{ "prop": "age", "oper": "Is greater than", "cnst": "10", "dataType": "number" },
-            "AND", { "prop": "vested", "oper": "Is equal to", "cnst": "", "dataType": "bool" }]
+        [{ "prop": "age", "oper": "Is greater than", "cnst": "10", "dataType": "number", "nullable": false },
+            "AND", { "prop": "vested", "oper": "Is equal to", "cnst": "", "dataType": "bool", "nullable": false }]
     ];
 
     isb._theExpression = theObj;

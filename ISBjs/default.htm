@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Interactive Search Builder for javascript Test Runner</title>
     <link rel="stylesheet" href="app.css" type="text/css" />
-   
+
 </head>
 <body>
     <div>
@@ -21,7 +21,7 @@
     <br />
     <br />
     <br />
-    <button id="parseBtn" onclick="parse();">Parse</button>
+    <button id="parseBtn" onclick="parse();">Parse</button><button onclick="removeFilter();">Remove Ship City</button>
 
     <br />
     <label for="dynLinq">Dynamic Linq:</label><br />
@@ -85,7 +85,7 @@
                 "andOrLiClass": "andOrLiClass",
                 "propSelClass": "propSelClass",
                 "propSelOptClass": "propSelOptClass",
-                "operSelClass": "operSelClass",                
+                "operSelClass": "operSelClass",
                 "btnClass": "btnClass",
                 "valueInputClass": "valueInputClass",
                 "valueInputErrClass": "valueInputErrClass",
@@ -103,27 +103,24 @@
                 ],
                 "divName": "content",
                 "ulName": "srchUL",
-                "ignoreCase" : false
+                "ignoreCase": false,
+                "filterProperties": [{ "display": "OrderID", "value": "OrderID", "dataType": "number" },
+                    { "display": "CustomerID", "value": "CustomerID", "dataType": "text" },
+                    { "display": "EmployeeID", "value": "EmployeeID", "dataType": "number" },
+                    { "display": "OrderDate", "value": "OrderDate", "dataType": "date", "nullable": true },
+                    { "display": "RequiredDate", "value": "RequiredDate", "dataType": "date", "nullable": true },
+                    { "display": "ShippedDate", "value": "ShippedDate", "dataType": "date", "nullable": true },
+                    { "display": "ShipVia", "value": "ShipVia", "dataType": "number" },
+                    { "display": "Freight", "value": "Freight", "dataType": "number" },
+                    { "display": "ShipName", "value": "ShipName", "dataType": "text" },
+                    { "display": "ShipAddress", "value": "ShipAddress", "dataType": "text" },
+                    { "display": "ShipCity", "value": "ShipCity", "dataType": "text" },
+                    { "display": "ShipRegion", "value": "ShipRegion", "dataType": "text" },
+                    { "display": "ShipPostalCode", "value": "ShipPostalCode", "dataType": "text" },
+                    { "display": "ShipCountry", "value": "ShipCountry", "dataType": "text" },
+                    { "display": "IsTrue", "value": "IsTrue", "dataType": "bool" }]
             });
 
-            var filterProperties = [{ "display": "OrderID", "value": "OrderID", "dataType": "number" },
-                { "display": "CustomerID", "value": "CustomerID", "dataType": "text" },
-                { "display": "EmployeeID", "value": "EmployeeID", "dataType": "number" },
-                { "display": "OrderDate", "value": "OrderDate", "dataType": "date", "nullable": true },
-                { "display": "RequiredDate", "value": "RequiredDate", "dataType": "date", "nullable": true },
-                { "display": "ShippedDate", "value": "ShippedDate", "dataType": "date", "nullable": true },
-                { "display": "ShipVia", "value": "ShipVia", "dataType": "number" },
-                { "display": "Freight", "value": "Freight", "dataType": "number" },
-                { "display": "ShipName", "value": "ShipName", "dataType": "text" },
-                { "display": "ShipAddress", "value": "ShipAddress", "dataType": "text" },
-                { "display": "ShipCity", "value": "ShipCity", "dataType": "text" },
-                { "display": "ShipRegion", "value": "ShipRegion", "dataType": "text" },
-                { "display": "ShipPostalCode", "value": "ShipPostalCode", "dataType": "text" },
-                { "display": "ShipCountry", "value": "ShipCountry", "dataType": "text" },
-                { "display": "IsTrue", "value": "IsTrue", "dataType": "bool" }
-            ];
-
-            isb.addFilterProperty(filterProperties);
         };
 
         function parse() {
@@ -135,7 +132,7 @@
 
             var dynlnq = document.querySelector("#dynLinq");
             dynlnq.value = linqresults.join();
-         
+
             var sql = document.querySelector("#sql");
             sql.value = sqlresults;
 
@@ -144,6 +141,10 @@
 
             var odata = document.querySelector("#odata");
             odata.value = odataresults;
+        }
+
+        function removeFilter() {
+            isb.removeFilterProperty({ "display": "ShipCity", "value": "ShipCity", "dataType": "text" });
         }
 
     </script>

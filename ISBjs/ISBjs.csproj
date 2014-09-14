@@ -31,6 +31,7 @@
   <ItemGroup>
     <Content Include="web.config" />
     <Content Include="app.js.map" />
+    <Content Include="isb.js.map" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

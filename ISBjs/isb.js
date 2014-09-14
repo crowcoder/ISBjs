@@ -18,6 +18,12 @@
                     this._params = [];
                     this._fltrConfig = fltrConfig;
                     this._props = [];
+
+                    //if provided, go ahead and set all of the filter properties now
+                    if (fltrConfig.filterProperties) {
+                        this.addFilterProperty(fltrConfig.filterProperties);
+                    }
+
                     this._theInputs = [];
 
                     //if a language map was supplied, use those values for the string literals

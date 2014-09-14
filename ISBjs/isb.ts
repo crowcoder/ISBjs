@@ -83,6 +83,8 @@ module com.contrivedexample.isbjs {
         defaultDataType: string;
         langmap: ILangMap;
         ignoreCase: boolean;
+
+        filterProperties: Array<IsbFiterProperty>;
     }
 
     export interface IsbFiterProperty {
@@ -161,6 +163,12 @@ module com.contrivedexample.isbjs {
         constructor(fltrConfig: IsbConfig) {
             this._fltrConfig = fltrConfig;
             this._props = [];
+
+            //if provided, go ahead and set all of the filter properties now
+            if (fltrConfig.filterProperties) {
+                this.addFilterProperty(fltrConfig.filterProperties);
+            }
+
             this._theInputs = [];
 
             //if a language map was supplied, use those values for the string literals
@@ -246,7 +254,7 @@ module com.contrivedexample.isbjs {
 
         //Add a 'field name' to the list of choices.
         addFilterProperty(props: Array<IsbFiterProperty>): void {
-            
+
             for (var idx = 0; idx < props.length; idx++) {
                 this._props.push(props[idx]);
             }
